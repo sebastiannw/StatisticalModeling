@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019) (preloaded format=pdflatex 2019.5.8)  10 DEC 2019 00:39
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019) (preloaded format=pdflatex 2019.5.8)  10 DEC 2019 00:54
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -843,295 +843,294 @@ Overfull \hbox (0.21233pt too wide) in paragraph at lines 118--125
 ludes the video game's de-vel-op-ment and re-lease 
  []
 
-
-Overfull \hbox (0.18355pt too wide) in paragraph at lines 145--153
-\T1/lmr/m/n/10 (+4) across the world by 50 dif-fer-ent de-vel-op-ers. I built a
- hi-er-ar-chi-cal lin-ear model on a log-a-rith-mic trans-for-ma- 
- []
-
-LaTeX Font Info:    Try loading font information for OT1+lmr on input line 167.
+LaTeX Font Info:    Try loading font information for OT1+lmr on input line 131.
 
 (/usr/local/texlive/2019/texmf-dist/tex/latex/lm/ot1lmr.fd
 File: ot1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
-LaTeX Font Info:    Try loading font information for OML+lmm on input line 167.
+LaTeX Font Info:    Try loading font information for OML+lmm on input line 131.
 
 (/usr/local/texlive/2019/texmf-dist/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
-LaTeX Font Info:    Try loading font information for OMS+lmsy on input line 167
+LaTeX Font Info:    Try loading font information for OMS+lmsy on input line 131
 .
 (/usr/local/texlive/2019/texmf-dist/tex/latex/lm/omslmsy.fd
 File: omslmsy.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
-LaTeX Font Info:    Try loading font information for OMX+lmex on input line 167
+LaTeX Font Info:    Try loading font information for OMX+lmex on input line 131
 .
 (/usr/local/texlive/2019/texmf-dist/tex/latex/lm/omxlmex.fd
 File: omxlmex.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 167.
+(Font)              <10> on input line 131.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 167.
+(Font)              <7> on input line 131.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 167.
-LaTeX Font Info:    Try loading font information for U+msa on input line 167.
+(Font)              <5> on input line 131.
+LaTeX Font Info:    Try loading font information for U+msa on input line 131.
 (/usr/local/texlive/2019/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 ) (/usr/local/texlive/2019/texmf-dist/tex/latex/microtype/mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 167.
+LaTeX Font Info:    Try loading font information for U+msb on input line 131.
 (/usr/local/texlive/2019/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) (/usr/local/texlive/2019/texmf-dist/tex/latex/microtype/mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
-LaTeX Font Info:    Try loading font information for TS1+lmr on input line 174.
+Overfull \hbox (0.18355pt too wide) in paragraph at lines 147--155
+\T1/lmr/m/n/10 (+4) across the world by 50 dif-fer-ent de-vel-op-ers. I built a
+ hi-er-ar-chi-cal lin-ear model on a log-a-rith-mic trans-for-ma- 
+ []
+
+LaTeX Font Info:    Try loading font information for TS1+lmr on input line 176.
 
 (/usr/local/texlive/2019/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
 ) [1
 
 {/usr/local/texlive/2019/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-Overfull \hbox (0.17096pt too wide) in paragraph at lines 195--198
+Overfull \hbox (0.17096pt too wide) in paragraph at lines 197--200
 []\T1/lmr/m/it/10 (+20) critic_score \T1/lmr/m/n/10 (+20) (nu-mer-i-cal): Av-er
 -age score (from 0 to 100) ac-cord-ing to crit-ics from other me-dia ag-gre- 
  []
 
-<MRD_FinalProject_files/figure-latex/sample-1.pdf, id=49, 459.7175pt x 315.1775
+<MRD_FinalProject_files/figure-latex/sample-1.pdf, id=50, 459.7175pt x 315.1775
 pt>
 File: MRD_FinalProject_files/figure-latex/sample-1.pdf Graphic file (type pdf)
 <use MRD_FinalProject_files/figure-latex/sample-1.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/sample-1.pdf  used
- on input line 234.
+ on input line 236.
 (pdftex.def)             Requested size: 155.01819pt x 106.27884pt.
-<MRD_FinalProject_files/figure-latex/sample-2.pdf, id=50, 459.7175pt x 315.1775
+<MRD_FinalProject_files/figure-latex/sample-2.pdf, id=51, 459.7175pt x 315.1775
 pt>
 File: MRD_FinalProject_files/figure-latex/sample-2.pdf Graphic file (type pdf)
 <use MRD_FinalProject_files/figure-latex/sample-2.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/sample-2.pdf  used
- on input line 235.
+ on input line 237.
 (pdftex.def)             Requested size: 155.01819pt x 106.27884pt.
 [2 <./MRD_FinalProject_files/figure-latex/sample-1.pdf> <./MRD_FinalProject_fil
 es/figure-latex/sample-2.pdf>]
-<MRD_FinalProject_files/figure-latex/plots-1.pdf, id=70, 453.695pt x 315.1775pt
+<MRD_FinalProject_files/figure-latex/plots-1.pdf, id=71, 453.695pt x 315.1775pt
 >
 File: MRD_FinalProject_files/figure-latex/plots-1.pdf Graphic file (type pdf)
 <use MRD_FinalProject_files/figure-latex/plots-1.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/plots-1.pdf  used 
-on input line 302.
+on input line 304.
 (pdftex.def)             Requested size: 155.01576pt x 107.68794pt.
-<MRD_FinalProject_files/figure-latex/plots-2.pdf, id=71, 459.7175pt x 315.1775p
+<MRD_FinalProject_files/figure-latex/plots-2.pdf, id=72, 459.7175pt x 315.1775p
 t>
 File: MRD_FinalProject_files/figure-latex/plots-2.pdf Graphic file (type pdf)
 <use MRD_FinalProject_files/figure-latex/plots-2.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/plots-2.pdf  used 
-on input line 303.
+on input line 305.
 (pdftex.def)             Requested size: 155.01819pt x 106.27884pt.
-<MRD_FinalProject_files/figure-latex/plots-3.pdf, id=72, 453.695pt x 315.1775pt
+<MRD_FinalProject_files/figure-latex/plots-3.pdf, id=73, 453.695pt x 315.1775pt
 >
 File: MRD_FinalProject_files/figure-latex/plots-3.pdf Graphic file (type pdf)
 <use MRD_FinalProject_files/figure-latex/plots-3.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/plots-3.pdf  used 
-on input line 304.
+on input line 306.
 (pdftex.def)             Requested size: 155.01576pt x 107.68794pt.
 
-Overfull \hbox (1.96135pt too wide) in paragraph at lines 302--305
+Overfull \hbox (1.96135pt too wide) in paragraph at lines 304--307
 [][] [] []  
  []
 
 [3 <./MRD_FinalProject_files/figure-latex/plots-1.pdf> <./MRD_FinalProject_file
 s/figure-latex/plots-2.pdf> <./MRD_FinalProject_files/figure-latex/plots-3.pdf>
 ]
-Overfull \hbox (0.13951pt too wide) in paragraph at lines 419--426
+Overfull \hbox (0.13951pt too wide) in paragraph at lines 421--428
 \T1/lmr/m/n/10 (+11) of the Action genre, with an age-restriction rating, with 
 critic score of 71.58, reviewed by 30.77 critics and 
  []
 
 
-Overfull \hbox (0.20737pt too wide) in paragraph at lines 419--426
+Overfull \hbox (0.20737pt too wide) in paragraph at lines 421--428
 \T1/lmr/m/n/10 (+15) 181.4 users would sell 0.20 million (M) copies worldwide. 
 The most significant variables is \T1/lmr/m/it/10 (+15) critic_count_c\T1/lmr/m
 /n/10 (+15) . 
  []
 
 
-Underfull \hbox (badness 2503) in paragraph at lines 427--445
+Underfull \hbox (badness 2503) in paragraph at lines 429--447
 [][]$ \T1/lmr/m/n/10 (+20) (29% less sales), $[][]$:\T1/lmr/m/it/10 (+20) ratin
 g_everyone \T1/lmr/m/n/10 (+20) (ad-di-tional 60% more sales), 
  []
 
 [4]
-<MRD_FinalProject_files/figure-latex/gammas_plot-1.pdf, id=116, 429.605pt x 274
+<MRD_FinalProject_files/figure-latex/gammas_plot-1.pdf, id=117, 429.605pt x 274
 .02374pt>
 File: MRD_FinalProject_files/figure-latex/gammas_plot-1.pdf Graphic file (type 
 pdf)
 <use MRD_FinalProject_files/figure-latex/gammas_plot-1.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/gammas_plot-1.pdf 
- used on input line 451.
+ used on input line 453.
 (pdftex.def)             Requested size: 234.88065pt x 149.81873pt.
 
-Overfull \hbox (0.11084pt too wide) in paragraph at lines 486--495
+Overfull \hbox (0.11084pt too wide) in paragraph at lines 488--497
 \T1/lmr/m/n/10 (+11) pa-nies to only those that have sold more than a cer-tain 
 amount of units world-wide could also im-prove the 
  []
 
 
-Overfull \hbox (0.1761pt too wide) in paragraph at lines 486--495
+Overfull \hbox (0.1761pt too wide) in paragraph at lines 488--497
 \T1/lmr/m/n/10 (+9) anal-y-sis. To avoid the mul-ti-collinear-ity is-sue with \
 T1/lmr/m/it/10 (+9) rat-ing_everyone \T1/lmr/m/n/10 (+9) I would use the vari-a
 ble \T1/lmr/m/it/10 (+9) rat-ing \T1/lmr/m/n/10 (+9) in-stead, 
  []
 
 [5 <./MRD_FinalProject_files/figure-latex/gammas_plot-1.pdf>]
-LaTeX Font Info:    Try loading font information for T1+lmtt on input line 512.
+LaTeX Font Info:    Try loading font information for T1+lmtt on input line 514.
 
 (/usr/local/texlive/2019/texmf-dist/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
 ) [6]
-<MRD_FinalProject_files/figure-latex/eda_appendix-1.pdf, id=135, 453.695pt x 31
+<MRD_FinalProject_files/figure-latex/eda_appendix-1.pdf, id=136, 453.695pt x 31
 5.1775pt>
 File: MRD_FinalProject_files/figure-latex/eda_appendix-1.pdf Graphic file (type
  pdf)
 <use MRD_FinalProject_files/figure-latex/eda_appendix-1.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/eda_appendix-1.pdf
-  used on input line 577.
+  used on input line 579.
 (pdftex.def)             Requested size: 155.01576pt x 107.68794pt.
-<MRD_FinalProject_files/figure-latex/eda_appendix-2.pdf, id=136, 453.695pt x 31
+<MRD_FinalProject_files/figure-latex/eda_appendix-2.pdf, id=137, 453.695pt x 31
 5.1775pt>
 File: MRD_FinalProject_files/figure-latex/eda_appendix-2.pdf Graphic file (type
  pdf)
 <use MRD_FinalProject_files/figure-latex/eda_appendix-2.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/eda_appendix-2.pdf
-  used on input line 578.
+  used on input line 580.
 (pdftex.def)             Requested size: 155.01576pt x 107.68794pt.
-<MRD_FinalProject_files/figure-latex/eda_appendix-3.pdf, id=137, 453.695pt x 31
+<MRD_FinalProject_files/figure-latex/eda_appendix-3.pdf, id=138, 453.695pt x 31
 5.1775pt>
 File: MRD_FinalProject_files/figure-latex/eda_appendix-3.pdf Graphic file (type
  pdf)
 <use MRD_FinalProject_files/figure-latex/eda_appendix-3.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/eda_appendix-3.pdf
-  used on input line 579.
+  used on input line 581.
 (pdftex.def)             Requested size: 155.01576pt x 107.68794pt.
-<MRD_FinalProject_files/figure-latex/eda_appendix-4.pdf, id=138, 453.695pt x 31
+<MRD_FinalProject_files/figure-latex/eda_appendix-4.pdf, id=139, 453.695pt x 31
 5.1775pt>
 File: MRD_FinalProject_files/figure-latex/eda_appendix-4.pdf Graphic file (type
  pdf)
 <use MRD_FinalProject_files/figure-latex/eda_appendix-4.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/eda_appendix-4.pdf
-  used on input line 580.
+  used on input line 582.
 (pdftex.def)             Requested size: 155.01576pt x 107.68794pt.
-<MRD_FinalProject_files/figure-latex/eda_appendix-5.pdf, id=139, 453.695pt x 31
+<MRD_FinalProject_files/figure-latex/eda_appendix-5.pdf, id=140, 453.695pt x 31
 5.1775pt>
 File: MRD_FinalProject_files/figure-latex/eda_appendix-5.pdf Graphic file (type
  pdf)
 <use MRD_FinalProject_files/figure-latex/eda_appendix-5.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/eda_appendix-5.pdf
-  used on input line 581.
+  used on input line 583.
 (pdftex.def)             Requested size: 155.01576pt x 107.68794pt.
-<MRD_FinalProject_files/figure-latex/eda_appendix-6.pdf, id=140, 459.7175pt x 3
+<MRD_FinalProject_files/figure-latex/eda_appendix-6.pdf, id=141, 459.7175pt x 3
 15.1775pt>
 File: MRD_FinalProject_files/figure-latex/eda_appendix-6.pdf Graphic file (type
  pdf)
 <use MRD_FinalProject_files/figure-latex/eda_appendix-6.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/eda_appendix-6.pdf
-  used on input line 582.
+  used on input line 584.
 (pdftex.def)             Requested size: 155.01819pt x 106.27884pt.
-<MRD_FinalProject_files/figure-latex/eda_appendix-7.pdf, id=141, 459.7175pt x 3
+<MRD_FinalProject_files/figure-latex/eda_appendix-7.pdf, id=142, 459.7175pt x 3
 15.1775pt>
 File: MRD_FinalProject_files/figure-latex/eda_appendix-7.pdf Graphic file (type
  pdf)
 <use MRD_FinalProject_files/figure-latex/eda_appendix-7.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/eda_appendix-7.pdf
-  used on input line 583.
+  used on input line 585.
 (pdftex.def)             Requested size: 155.01819pt x 106.27884pt.
-<MRD_FinalProject_files/figure-latex/eda_appendix-8.pdf, id=142, 460.72125pt x 
+<MRD_FinalProject_files/figure-latex/eda_appendix-8.pdf, id=143, 460.72125pt x 
 315.1775pt>
 File: MRD_FinalProject_files/figure-latex/eda_appendix-8.pdf Graphic file (type
  pdf)
 <use MRD_FinalProject_files/figure-latex/eda_appendix-8.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/eda_appendix-8.pdf
-  used on input line 584.
+  used on input line 586.
 (pdftex.def)             Requested size: 155.01921pt x 106.048pt.
-<MRD_FinalProject_files/figure-latex/eda_appendix-9.pdf, id=143, 459.7175pt x 3
+<MRD_FinalProject_files/figure-latex/eda_appendix-9.pdf, id=144, 459.7175pt x 3
 15.1775pt>
 File: MRD_FinalProject_files/figure-latex/eda_appendix-9.pdf Graphic file (type
  pdf)
 <use MRD_FinalProject_files/figure-latex/eda_appendix-9.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/eda_appendix-9.pdf
-  used on input line 585.
+  used on input line 587.
 (pdftex.def)             Requested size: 155.01819pt x 106.27884pt.
-<MRD_FinalProject_files/figure-latex/eda_appendix-10.pdf, id=144, 453.695pt x 3
+<MRD_FinalProject_files/figure-latex/eda_appendix-10.pdf, id=145, 453.695pt x 3
 15.1775pt>
 File: MRD_FinalProject_files/figure-latex/eda_appendix-10.pdf Graphic file (typ
 e pdf)
 <use MRD_FinalProject_files/figure-latex/eda_appendix-10.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/eda_appendix-10.pd
-f  used on input line 586.
+f  used on input line 588.
 (pdftex.def)             Requested size: 155.01576pt x 107.68794pt.
-<MRD_FinalProject_files/figure-latex/eda_appendix-11.pdf, id=145, 453.695pt x 3
+<MRD_FinalProject_files/figure-latex/eda_appendix-11.pdf, id=146, 453.695pt x 3
 15.1775pt>
 File: MRD_FinalProject_files/figure-latex/eda_appendix-11.pdf Graphic file (typ
 e pdf)
 <use MRD_FinalProject_files/figure-latex/eda_appendix-11.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/eda_appendix-11.pd
-f  used on input line 587.
+f  used on input line 589.
 (pdftex.def)             Requested size: 155.01576pt x 107.68794pt.
-<MRD_FinalProject_files/figure-latex/eda_appendix-12.pdf, id=146, 453.695pt x 3
+<MRD_FinalProject_files/figure-latex/eda_appendix-12.pdf, id=147, 453.695pt x 3
 15.1775pt>
 File: MRD_FinalProject_files/figure-latex/eda_appendix-12.pdf Graphic file (typ
 e pdf)
 <use MRD_FinalProject_files/figure-latex/eda_appendix-12.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/eda_appendix-12.pd
-f  used on input line 588.
+f  used on input line 590.
 (pdftex.def)             Requested size: 155.01576pt x 107.68794pt.
-<MRD_FinalProject_files/figure-latex/eda_appendix-13.pdf, id=147, 453.695pt x 3
+<MRD_FinalProject_files/figure-latex/eda_appendix-13.pdf, id=148, 453.695pt x 3
 15.1775pt>
 File: MRD_FinalProject_files/figure-latex/eda_appendix-13.pdf Graphic file (typ
 e pdf)
 <use MRD_FinalProject_files/figure-latex/eda_appendix-13.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/eda_appendix-13.pd
-f  used on input line 589.
+f  used on input line 591.
 (pdftex.def)             Requested size: 155.01576pt x 107.68794pt.
-<MRD_FinalProject_files/figure-latex/eda_appendix-14.pdf, id=148, 453.695pt x 3
+<MRD_FinalProject_files/figure-latex/eda_appendix-14.pdf, id=149, 453.695pt x 3
 15.1775pt>
 File: MRD_FinalProject_files/figure-latex/eda_appendix-14.pdf Graphic file (typ
 e pdf)
 <use MRD_FinalProject_files/figure-latex/eda_appendix-14.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/eda_appendix-14.pd
-f  used on input line 590.
+f  used on input line 592.
 (pdftex.def)             Requested size: 155.01576pt x 107.68794pt.
-<MRD_FinalProject_files/figure-latex/eda_appendix-15.pdf, id=149, 453.695pt x 3
+<MRD_FinalProject_files/figure-latex/eda_appendix-15.pdf, id=150, 453.695pt x 3
 15.1775pt>
 File: MRD_FinalProject_files/figure-latex/eda_appendix-15.pdf Graphic file (typ
 e pdf)
 <use MRD_FinalProject_files/figure-latex/eda_appendix-15.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/eda_appendix-15.pd
-f  used on input line 591.
+f  used on input line 593.
 (pdftex.def)             Requested size: 155.01576pt x 107.68794pt.
 
-Overfull \hbox (1.95892pt too wide) in paragraph at lines 577--591
+Overfull \hbox (1.95892pt too wide) in paragraph at lines 579--593
 [][] [] [] 
  []
 
 
-Overfull \hbox (1.96135pt too wide) in paragraph at lines 577--591
+Overfull \hbox (1.96135pt too wide) in paragraph at lines 579--593
 [] [] [] 
  []
 
 
-Overfull \hbox (1.96722pt too wide) in paragraph at lines 577--591
+Overfull \hbox (1.96722pt too wide) in paragraph at lines 579--593
 [] [] [] 
  []
 
 
-Overfull \hbox (1.95892pt too wide) in paragraph at lines 577--591
+Overfull \hbox (1.95892pt too wide) in paragraph at lines 579--593
 [] [] [] 
  []
 
 
-Overfull \hbox (1.95892pt too wide) in paragraph at lines 577--591
+Overfull \hbox (1.95892pt too wide) in paragraph at lines 579--593
 [] [] []  
  []
 
@@ -1147,98 +1146,98 @@ _files/figure-latex/eda_appendix-10.pdf> <./MRD_FinalProject_files/figure-latex
 f> <./MRD_FinalProject_files/figure-latex/eda_appendix-13.pdf> <./MRD_FinalProj
 ect_files/figure-latex/eda_appendix-14.pdf> <./MRD_FinalProject_files/figure-la
 tex/eda_appendix-15.pdf>] [8]
-<MRD_FinalProject_files/figure-latex/assumptions-1.pdf, id=278, 436.63126pt x 2
+<MRD_FinalProject_files/figure-latex/assumptions-1.pdf, id=279, 436.63126pt x 2
 50.9375pt>
 File: MRD_FinalProject_files/figure-latex/assumptions-1.pdf Graphic file (type 
 pdf)
 <use MRD_FinalProject_files/figure-latex/assumptions-1.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/assumptions-1.pdf 
- used on input line 731.
+ used on input line 733.
 (pdftex.def)             Requested size: 155.02184pt x 89.093pt.
-<MRD_FinalProject_files/figure-latex/assumptions-2.pdf, id=279, 436.63126pt x 2
+<MRD_FinalProject_files/figure-latex/assumptions-2.pdf, id=280, 436.63126pt x 2
 50.9375pt>
 File: MRD_FinalProject_files/figure-latex/assumptions-2.pdf Graphic file (type 
 pdf)
 <use MRD_FinalProject_files/figure-latex/assumptions-2.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/assumptions-2.pdf 
- used on input line 732.
+ used on input line 734.
 (pdftex.def)             Requested size: 155.02184pt x 89.093pt.
-<MRD_FinalProject_files/figure-latex/assumptions-3.pdf, id=280, 436.63126pt x 2
+<MRD_FinalProject_files/figure-latex/assumptions-3.pdf, id=281, 436.63126pt x 2
 50.9375pt>
 File: MRD_FinalProject_files/figure-latex/assumptions-3.pdf Graphic file (type 
 pdf)
 <use MRD_FinalProject_files/figure-latex/assumptions-3.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/assumptions-3.pdf 
- used on input line 733.
+ used on input line 735.
 (pdftex.def)             Requested size: 155.02184pt x 89.093pt.
-<MRD_FinalProject_files/figure-latex/assumptions-4.pdf, id=281, 436.63126pt x 2
+<MRD_FinalProject_files/figure-latex/assumptions-4.pdf, id=282, 436.63126pt x 2
 50.9375pt>
 File: MRD_FinalProject_files/figure-latex/assumptions-4.pdf Graphic file (type 
 pdf)
 <use MRD_FinalProject_files/figure-latex/assumptions-4.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/assumptions-4.pdf 
- used on input line 734.
+ used on input line 736.
 (pdftex.def)             Requested size: 155.02184pt x 89.093pt.
-<MRD_FinalProject_files/figure-latex/assumptions-5.pdf, id=282, 436.63126pt x 2
+<MRD_FinalProject_files/figure-latex/assumptions-5.pdf, id=283, 436.63126pt x 2
 50.9375pt>
 File: MRD_FinalProject_files/figure-latex/assumptions-5.pdf Graphic file (type 
 pdf)
 <use MRD_FinalProject_files/figure-latex/assumptions-5.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/assumptions-5.pdf 
- used on input line 735.
+ used on input line 737.
 (pdftex.def)             Requested size: 155.02184pt x 89.093pt.
-<MRD_FinalProject_files/figure-latex/assumptions-6.pdf, id=283, 436.63126pt x 2
+<MRD_FinalProject_files/figure-latex/assumptions-6.pdf, id=284, 436.63126pt x 2
 50.9375pt>
 File: MRD_FinalProject_files/figure-latex/assumptions-6.pdf Graphic file (type 
 pdf)
 <use MRD_FinalProject_files/figure-latex/assumptions-6.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/assumptions-6.pdf 
- used on input line 736.
+ used on input line 738.
 (pdftex.def)             Requested size: 155.02184pt x 89.093pt.
-<MRD_FinalProject_files/figure-latex/assumptions-7.pdf, id=284, 446.66875pt x 2
+<MRD_FinalProject_files/figure-latex/assumptions-7.pdf, id=285, 446.66875pt x 2
 88.07625pt>
 File: MRD_FinalProject_files/figure-latex/assumptions-7.pdf Graphic file (type 
 pdf)
 <use MRD_FinalProject_files/figure-latex/assumptions-7.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/assumptions-7.pdf 
- used on input line 737.
+ used on input line 739.
 (pdftex.def)             Requested size: 155.02098pt x 99.97981pt.
-<MRD_FinalProject_files/figure-latex/assumptions-8.pdf, id=285, 440.64626pt x 2
+<MRD_FinalProject_files/figure-latex/assumptions-8.pdf, id=286, 440.64626pt x 2
 86.06876pt>
 File: MRD_FinalProject_files/figure-latex/assumptions-8.pdf Graphic file (type 
 pdf)
 <use MRD_FinalProject_files/figure-latex/assumptions-8.pdf>
 Package pdftex.def Info: MRD_FinalProject_files/figure-latex/assumptions-8.pdf 
- used on input line 738.
+ used on input line 740.
 (pdftex.def)             Requested size: 155.01517pt x 100.63626pt.
 
-Overfull \hbox (1.97714pt too wide) in paragraph at lines 731--739
+Overfull \hbox (1.97714pt too wide) in paragraph at lines 733--741
 [][] [] [] 
  []
 
 
-Overfull \hbox (1.97714pt too wide) in paragraph at lines 731--739
+Overfull \hbox (1.97714pt too wide) in paragraph at lines 733--741
 [] [] [] 
  []
 
 [9]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 741.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 743.
 [10 <./MRD_FinalProject_files/figure-latex/assumptions-1.pdf> <./MRD_FinalProje
 ct_files/figure-latex/assumptions-2.pdf> <./MRD_FinalProject_files/figure-latex
 /assumptions-3.pdf> <./MRD_FinalProject_files/figure-latex/assumptions-4.pdf> <
 ./MRD_FinalProject_files/figure-latex/assumptions-5.pdf> <./MRD_FinalProject_fi
 les/figure-latex/assumptions-6.pdf> <./MRD_FinalProject_files/figure-latex/assu
 mptions-7.pdf> <./MRD_FinalProject_files/figure-latex/assumptions-8.pdf>]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 741.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 743.
 (./MRD_FinalProject.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 741.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 741.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 743.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 743.
 Package rerunfilecheck Info: File `MRD_FinalProject.out' has not changed.
 (rerunfilecheck)             Checksum: 181C1C9A10E2A3219786EDB3CF2C8B66;732.
 
 LaTeX Warning: There were multiply-defined labels.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 741.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 743.
  ) 
 Here is how much of TeX's memory you used:
  15702 strings out of 492616
@@ -1265,10 +1264,10 @@ local/texlive/2019/texmf-dist/fonts/type1/public/lm/lmri12.pfb></usr/local/texl
 ive/2019/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></usr/local/texlive/2019/t
 exmf-dist/fonts/type1/public/lm/lmsy7.pfb></usr/local/texlive/2019/texmf-dist/f
 onts/type1/public/lm/lmtt10.pfb>
-Output written on MRD_FinalProject.pdf (10 pages, 2286884 bytes).
+Output written on MRD_FinalProject.pdf (10 pages, 2287047 bytes).
 PDF statistics:
- 414 PDF objects out of 1000 (max. 8388607)
- 299 compressed objects within 3 object streams
+ 415 PDF objects out of 1000 (max. 8388607)
+ 300 compressed objects within 3 object streams
  29 named destinations out of 1000 (max. 500000)
  12490 words of extra memory for PDF output out of 14400 (max. 10000000)
 
