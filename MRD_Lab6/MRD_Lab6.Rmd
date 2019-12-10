@@ -1,0 +1,320 @@
+---
+title: 'Lab 6: CASUAL INFERENCE'
+author: "Yuan Feng, Roderick Whang, Sebastián Soriano Pérez"
+date: "11/15/2019"
+output: pdf_document
+header-includes:
+- \usepackage{caption}
+- \usepackage[document]{ragged2e}
+- \usepackage{booktabs}
+- \usepackage{indentfirst}
+- \usepackage{float}
+- \floatplacement{figure}{H}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(arm); library(pROC); library(e1071); library(caret); library(knitr)
+library(rms); library(ggplot2); library(lme4); library(rstan); library(brms)
+library(sjPlot); library(dplyr); library(kableExtra); library(formatR); library(ggfortify)
+library(quantreg); library(gridExtra); library(Hmisc); library(corrplot); library(GGally)
+library(psych); library(car); library(huxtable); library(stargazer); library(DataExplorer)
+library(GGally); library(MASS); library(data.table); library(tidyverse); library(lmerTest)
+library(ggpubr); library(reshape2); library(mice); library(naniar); library(cobalt)
+library(MatchIt); library(randomForest)
+rb <- c('red', 'orange', 'yellow', 'green', 'blue', 'purple')
+```
+
+```{r, echo = FALSE}
+RHC <- read.table('rhc.txt', head = T)
+RHC <- RHC[, -which(names(RHC) == 'surv2md1')]
+```
+
+## Answer 1
+
+The distribution of several variables is not well ballanced across groups: cat1_MOSF w/Sepsis, resp_Yes, card_Yes, neuro_Yes, aps1, scoma1, wtkilo1, meanbp1, resp1, hrt1, pafi1, paco21, ph1, hema1, crea1, bili1, alb1.
+
+```{r cars, echo = FALSE, out.width = '50%', out.height = '50%'}
+bal_tab <- bal.tab(covs = RHC[,2:52], treat = as.factor(RHC$treatment), estimand = 'ATT')
+kable(
+  bal_tab$Balance[1:33, c('Type', 'Diff.Un')],
+  row.names = TRUE,
+  label = 'tables', format = 'latex', booktabs = TRUE
+  ) %>% kable_styling(
+    latex_options = 'HOLD_position'
+    )
+kable(
+  bal_tab$Balance[34:77, c('Type', 'Diff.Un')],
+  row.names = TRUE,
+  label = 'tables', format = 'latex', booktabs = TRUE
+  ) %>% kable_styling(
+    latex_options = 'HOLD_position'
+    )
+love.plot(list(treat = as.factor(RHC$treatment), covs = RHC[, 2:52], estimand = 'ATT'),
+          stars = 'std')
+```
+
+## Answer 2
+
+The ATT for the patients with rhc = TRUE is 0.07299949.
+
+```{r, echo = FALSE}
+r1 <- glm(
+  dth30 ~ treatment + age + sex + race + edu + income + ninsclas + cat1 + cat2 + resp + card + 
+    neuro + gastr + renal +  meta +  hema + seps + trauma +  ortho + das2d3pc + dnr1 + ca + aps1 +
+    scoma1 + wtkilo1 + temp1 + meanbp1 + resp1 + hrt1 + pafi1 + paco21 + ph1 + wblc1 + hema1 + 
+    sod1 + pot1 + crea1 + bili1 + alb1 + cardiohx + chfhx + dementhx + psychhx + chrpulhx + 
+    renalhx + liverhx + gibledhx + malighx + immunhx + transhx + amihx + wt0,
+  data = RHC, family = binomial(link = logit)
+  )
+test_set <- RHC[RHC$treatment == TRUE,]
+p1 <- predict(r1, test_set, type = 'response')
+
+test_set$treatment <- FALSE
+p0 <- predict(r1, test_set, type = 'response')
+p <- mean(p1 - p0)
+kable(p,
+  row.names = FALSE,
+  col.names = c('ATT'),
+  label = 'tables', format = 'latex', booktabs = TRUE
+  ) %>% kable_styling(
+    latex_options = 'HOLD_position'
+    )
+```
+
+## Answer 3
+
+The treated patients are worse off with RHC but we cannot trust this conclusion because the data is imbalanced.
+
+## Answer 4
+
+There are 103 observations that violate the overlap. We have discarded them from the dataset (RHC_2).
+
+```{r, echo = FALSE, out.width = '50%', out.height = '50%'}
+score <- glm(treatment ~ . - dth30, data = RHC, family = binomial(link = logit))
+#summary(score)
+
+score_pred <- predict(score, type = 'response')
+ggplot(RHC, aes(x = score_pred, fill = treatment)) +
+  geom_density(alpha = 0.3) +
+  xlim(0, 1)
+
+a <- sum(score_pred < max(
+  min(score_pred[RHC$treatment == FALSE]), min(score_pred[RHC$treatment == TRUE])
+  ))
+b <- sum(score_pred > min(
+  max(score_pred[RHC$treatment == FALSE]), max(score_pred[RHC$treatment == TRUE])
+  ))
+kable(c(a, b),
+  row.names = TRUE,
+  col.names = c('Overlap Violations'),
+  label = 'tables', format = 'latex', booktabs = TRUE
+  ) %>% kable_styling(
+    latex_options = 'HOLD_position'
+    )
+
+index <- !(
+  score_pred < max(
+    min(score_pred[RHC$treatment == FALSE]), min(score_pred[RHC$treatment == TRUE])
+    ) 
+  | score_pred > min(
+    max(score_pred[RHC$treatment == FALSE]), max(score_pred[RHC$treatment == TRUE])
+    )
+  )
+
+RHC_2 <- RHC[index,]
+```
+
+## Answer 5
+
+After using one-to-one, nearest neighbor matching on the estimated propensity scores, there are improvements overall but some covariates are still imbalanced, such as cat1, aps1, ph1, resp1, etc.
+
+```{r, echo = FALSE, out.width = '50%', out.height = '50%'}
+matches <- matchit(formula(score), method = 'nearest', distance = 'logit', data = RHC_2)
+rhcmatcheddata <- match.data(matches)
+bal_tab2 <- bal.tab(covs = rhcmatcheddata[,2:52], treat = as.numeric(rhcmatcheddata$treatment),
+                   estimand = 'ATT')
+kable(
+  bal_tab2$Balance[1:44, c('Type', 'Diff.Un')],
+  row.names = TRUE,
+  label = 'tables', format = 'latex', booktabs = TRUE
+  ) %>% kable_styling(
+    latex_options = 'HOLD_position'
+    )
+kable(
+  bal_tab2$Balance[45:77, c('Type', 'Diff.Un')],
+  row.names = TRUE,
+  label = 'tables', format = 'latex', booktabs = TRUE
+  ) %>% kable_styling(
+    latex_options = 'HOLD_position'
+    )
+
+love.plot(list(
+  treat = as.numeric(rhcmatcheddata$treatment), covs = rhcmatcheddata[, 2:52], estimand = 'ATT'
+  ), stars = 'std')
+```
+
+## Answer 6
+
+The treated patients are worse off with RHC. The average causal effect Q using the matched sample obtained above is 0.07908; The 95% confidence interval is [0.0502, 0.1079].
+
+```{r, echo = FALSE}
+treatpat <- mean(rhcmatcheddata$dth30[rhcmatcheddata$treatment == 1]) -
+  mean(rhcmatcheddata$dth30[rhcmatcheddata$treatment == 0])
+se <- sqrt(
+  var(rhcmatcheddata$dth30[rhcmatcheddata$treatment == 1]) / 2175 +
+    var(rhcmatcheddata$dth30[rhcmatcheddata$treatment == 1]) / 2175
+  )
+
+kable(data.frame('2.5 percent' = treatpat - 1.96 * se, 'Q' = treatpat, '97.5 percent' = treatpat + 1.96 * se),
+  row.names = FALSE,
+  label = 'tables', format = 'latex', booktabs = TRUE
+  ) %>% kable_styling(
+    latex_options = 'HOLD_position'
+    )
+```
+
+## Answer 7
+
+There are 103 observations that violate the overlap once again. We have discarded them from the dataset (RHC_3).
+
+```{r, echo = FALSE, out.width = '50%', out.height = '50%'}
+rf <- randomForest(as.factor(treatment) ~ . - dth30, data = RHC, mtry = 20)
+rfpscores <- predict(rf, type = 'prob')[,2]
+ggplot(RHC, aes(x = rfpscores, fill = treatment)) +
+  geom_density(alpha = 0.3) +
+  xlim(0, 1)
+
+c <- sum(score_pred < max(
+  min(score_pred[RHC$treatment == FALSE]), min(score_pred[RHC$treatment == TRUE])
+  ))
+d <- sum(score_pred > min(
+  max(score_pred[RHC$treatment == FALSE]), max(score_pred[RHC$treatment == TRUE])
+  ))
+kable(c(c, d),
+  row.names = TRUE,
+  col.names = c('Overlap Violations'),
+  label = 'tables', format = 'latex', booktabs = TRUE
+  ) %>% kable_styling(
+    latex_options = 'HOLD_position'
+    )
+
+index_rf <- !(
+  score_pred < max(
+    min(score_pred[RHC$treatment == FALSE]), min(score_pred[RHC$treatment == TRUE])
+    ) 
+  | score_pred > min(
+    max(score_pred[RHC$treatment == FALSE]), max(score_pred[RHC$treatment == TRUE])
+    )
+  )
+
+RHC_3 <- RHC[index_rf,]
+rfpscores2 <- rfpscores[index_rf]
+```
+
+## Answer 8
+
+After using one-to-one, nearest neighbor matching on the new estimated propensity scores from question 7, some of covariates are still imbalanced, such as temp1, meanbp1, resp1, crea1, etc.
+
+```{r, echo = FALSE, out.width = '50%', out.height = '50%'}
+matches2 <- matchit(formula(score), method = 'nearest', distance = 'logit', data = RHC_3)
+rhcmatcheddata2 <- match.data(matches2)
+bal_tab3 <- bal.tab(covs = rhcmatcheddata2[,2:52], treat = as.numeric(rhcmatcheddata2$treatment),
+                   estimand = 'ATT')
+kable(
+  bal_tab3$Balance[1:44, c('Type', 'Diff.Un')],
+  row.names = TRUE,
+  label = 'tables', format = 'latex', booktabs = TRUE
+  ) %>% kable_styling(
+    latex_options = 'HOLD_position'
+    )
+kable(
+  bal_tab3$Balance[45:77, c('Type', 'Diff.Un')],
+  row.names = TRUE,
+  label = 'tables', format = 'latex', booktabs = TRUE
+  ) %>% kable_styling(
+    latex_options = 'HOLD_position'
+    )
+
+love.plot(list(
+  treat = as.numeric(rhcmatcheddata2$treatment), covs = rhcmatcheddata2[, 2:52], estimand = 'ATT'
+  ), stars = 'std')
+```
+
+
+## Answer 9
+
+The average causal effect Q using the new matched sample obtained in question 8 is 0.08268; The 95% confidence interval is [0.05409,0.1113]. Treated patients are worse off with RHC.
+
+```{r, echo = FALSE}
+treatpat2 <- mean(rhcmatcheddata2$dth30[rhcmatcheddata2$treatment == 1]) -
+  mean(rhcmatcheddata2$dth30[rhcmatcheddata2$treatment == 0])
+se2 <- sqrt(
+  var(rhcmatcheddata2$dth30[rhcmatcheddata2$treatment == 1]) / 2162 +
+    var(rhcmatcheddata$dth30[rhcmatcheddata2$treatment == 1]) / 2162
+  )  
+
+kable(data.frame('2.5 percent' = treatpat2 - 1.96 * se2, 'Q' = treatpat2, 
+                 '97.5 percent' = treatpat2 + 1.96 * se2),
+  row.names = FALSE,
+  label = 'tables', format = 'latex', booktabs = TRUE
+  ) %>% kable_styling(
+    latex_options = 'HOLD_position'
+    )
+```
+
+
+## Answer 10
+
+RHC have negative effect on patients as they have high odds of dying after RHC treatment.
+
+```{r, echo = FALSE}
+m1 <- glm(
+  dth30 ~ treatment + age + sex + race + edu + income + ninsclas + cat1 + cat2 + resp + card + 
+    neuro + gastr + renal + meta + hema + seps + trauma + ortho + das2d3pc + dnr1 + ca + aps1 + 
+    scoma1 + wtkilo1 + temp1 + meanbp1 + resp1 + hrt1 + pafi1 + paco21 + ph1 + wblc1 + hema1 +
+    sod1 + pot1 + crea1 + bili1 + alb1 + cardiohx + chfhx + dementhx + psychhx + chrpulhx + 
+    renalhx + liverhx + gibledhx + malighx + immunhx + transhx + amihx + wt0,
+  data = rhcmatcheddata2, family = binomial(link = logit)
+  )
+
+score3 <- glm(treatment ~ . - dth30, data = rhcmatcheddata2, family = binomial(link = logit))
+score_pred3 <- predict(score3, type = 'response')
+
+rhc3 <- RHC[(
+  score_pred3 >= max(
+    min(score_pred3[rhcmatcheddata2$treatment == TRUE]),
+    min(score_pred3[rhcmatcheddata2$treatment == FALSE])
+    ) 
+  & score_pred3 <= min(
+    max(score_pred3[rhcmatcheddata2$treatment==TRUE]),
+    max(score_pred3[rhcmatcheddata2$treatment==FALSE])
+    )
+  ),]
+
+matches3 <- matchit(
+  formula = treatment ~ age + sex + race + edu + income + ninsclas + cat1 + cat2 + resp + card + 
+    neuro + gastr + renal + meta + hema + seps + trauma + ortho + das2d3pc + dnr1 + ca + aps1 + 
+    scoma1 + wtkilo1 + temp1 + meanbp1 + resp1 + hrt1 + pafi1 + paco21 + ph1 + wblc1 + hema1 +
+    sod1 + pot1 + crea1 + bili1 + alb1 + cardiohx + chfhx + dementhx + psychhx + chrpulhx + 
+    renalhx + liverhx + gibledhx + malighx + immunhx + transhx + amihx + wt0, 
+  data = rhc3
+  )
+
+rhcmatcheddata3 <- match.data(matches3)
+treatpat3 <- mean(rhcmatcheddata3$dth30[rhcmatcheddata3$treatment == 1]) -
+  mean(rhcmatcheddata3$dth30[rhcmatcheddata3$treatment == 0])
+
+se3 <- sqrt(
+  var(rhcmatcheddata3$dth30[rhcmatcheddata3$treatment == 1]) / 2175 +
+    var(rhcmatcheddata3$dth30[rhcmatcheddata3$treatment == 1]) / 2175
+  )       
+
+kable(data.frame('2.5 percent' = treatpat3 - 1.96 * se3, 'Q' = treatpat3, 
+                 '97.5 percent' = treatpat3 + 1.96 * se3),
+  row.names = FALSE,
+  label = 'tables', format = 'latex', booktabs = TRUE
+  ) %>% kable_styling(
+    latex_options = 'HOLD_position'
+    )
+```

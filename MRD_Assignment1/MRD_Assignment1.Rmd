@@ -1,0 +1,224 @@
+---
+title: "Methods and Data Analysis 1"
+author: "Sebastián Soriano Pérez [ss1072]"
+date: "9/5/2019"
+output:
+  pdf_document: default
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Question 1: OLD FAITHFUL**\
+
+- Write down a regression model for predicting the interval between eruptions from the duration of the previous one. Make sure to use the right mathematical notation.
+\[
+interval_i = \beta_0 + \beta_1 · duration_i + \epsilon_i; \hspace{1mm} \epsilon \stackrel{iid}{\sim} N(0, \sigma ^ 2)
+\]
+
+- Fit the model to the data and interpret your results. In your answer, make sure you include the output from the regression model including the estimated intercept, slope, residual standard error, and $R ^ 2$.
+
+```{r}
+OldFaithful <- read.csv('OldFaithful.csv')
+lm_OldFaithful <- lm(Interval ~ Duration, OldFaithful)
+summary(lm_OldFaithful)
+sqrt(sum(residuals(lm_OldFaithful) ^ 2) / df.residual(lm_OldFaithful))
+plot(OldFaithful$Interval ~ OldFaithful$Duration, pch = 1, col = 'blue')
+abline(lm_OldFaithful, col = 'darkblue', lwd = 3)
+```
+\
+*Model:* $\hat{interval}_i = \hat\beta_0 + \hat\beta_1 · duration_i + e_i; \hspace{1mm} e \stackrel{iid}{\sim} N(0, \sigma ^ 2)$
+
+*Estimated intercept:* $\hat\beta_0 = 33.8282$
+
+*Estimated slope:* $\hat\beta_1 = 10.7410$
+
+*Residual standard error:* $RMSE = 6.68261$
+
+*R-squared:* $R ^ 2 = 0.7369$
+
+- Also, include the 95% confidence interval for the slope, and explain what the interval reveals about the relationship between duration and waiting time.
+```{r}
+confint(lm_OldFaithful, level = 0.95)
+```
+\
+*95% confidence interval for the slope:* $CI_{\beta_1} = (9.499061, 11.98288)$
+
+*The interval reveals that we can be very confident about the positive correlation between duration and interval waiting time. The duration of an eruption is proportional to the waiting time by a factor between 9.499061 and 11.98288 with 95% confidence.*
+
+- Describe in a few sentences whether or not you think the regression assumptions are plausible based on residual plots (you don’t need to include the plots).
+```{r}
+plot(residuals(lm_OldFaithful) ~ OldFaithful$Duration, pch = 1, col = 'blue')
+abline(h = 0, col = 'darkblue', lwd = 3)
+```
+\
+*I believe the regression assumptions are met. The residuals seem to be normally distributed and there does not seem to be another underlying pattern among them. It should be noted that most data points are concentrated to the right, which may be something that deserves more attention.*
+
+- Construct 95% prediction intervals for the waiting time until the next eruption if the duration of the previous one was 2 minutes, 2.5 minutes, 3 minutes, 3.5 minutes and 4 minutes. Present your answer as a single plot.
+```{r}
+newData <- data.frame(Duration = c(2, 2.5, 3, 3.5, 4))
+predictions <- data.frame(predict(lm_OldFaithful, newData, interval = "prediction", level = 0.95))
+predictions$Duration <- c(2, 2.5, 3, 3.5, 4); predictions <- predictions[c(4, 1, 2, 3)]
+predictions
+plot(predictions$fit ~ newData$Duration, pch = 1, col = 'blue', ylim = c(40, 90), xlim = c(2, 4))
+lines(newData$Duration, predictions$lwr, col = 'red', lty = 2)
+lines(newData$Duration, predictions$upr, col = 'red', lty = 2)
+```
+
+
+**Question 2: RESPIRATORY RATES FOR CHILDREN**\
+
+- Analyze the data and include a useful plot that a physician could use to assess a normal range of respiratory rate for children of any age between 0 and 3.
+```{r}
+Respiratory <- read.csv('Respiratory.csv')
+plot(Respiratory$Rate ~ Respiratory$Age, pch = 1, col = 'blue')
+hist(Respiratory$Rate, breaks = 20, density = 10, col = "lightblue", xlab = "Respiratory Rate", main = "Respiratory Rate", freq = FALSE) 
+m <- mean(Respiratory$Rate)
+paste('mean: ', as.character(m))
+s <- sd(Respiratory$Rate)
+paste('sd: ', as.character(s))
+curve(dnorm(x, mean = m, sd = s), col = "darkblue", lwd = 2, add = TRUE, yaxt = "n")
+
+```
+\
+*The data shows that the values within 2 standard deviations of the mean are (around 95% of the values if a normal distribution for the data is assumed for the total population) would be in the range $(16.07, 59.40)$. However, the scatterpolot reveals that the data is not entirely normally distributed for children ages 0 to 3 and there seems to be a correlation between age and respiratory rate (older children tend to have lower respiratory rates).*\
+
+- Include the output of the regression that predicts respiratory rates from age. Also, is there enough evidence that the model assumptions are reasonable for this data? You should consider transformations (think log transformations etc) for both variables if you think the original relationship is nonlinear.
+```{r}
+lm_Respiratory <- lm(Rate ~ Age, Respiratory)
+summary(lm_Respiratory)
+sqrt(sum(residuals(lm_Respiratory) ^ 2) / df.residual(lm_Respiratory))
+plot(Respiratory$Rate ~ Respiratory$Age, pch = 1, col = 'blue')
+abline(lm_Respiratory, col = 'darkblue', lwd = 3)
+
+plot(y = lm_Respiratory$residual, x = Respiratory$Age, xlab = "Age", ylab = "Residual", main = "Linearity Test", col = 'blue')
+abline(0,0)
+plot(lm_Respiratory, which = 1, col = 'blue')
+abline(0,0)
+plot(lm_Respiratory, which = 2, col = 'blue')
+```
+\
+*Model:* $\hat{rate}_i = \hat\beta_0 + \hat\beta_1 · age_i + e_i; \hspace{1mm} e \stackrel{iid}{\sim} N(0, \sigma ^ 2)$
+
+*Estimated intercept:* $\hat\beta_0 = 47.05216$
+
+*Estimated slope:* $\hat\beta_1 = -0.69571$
+
+*The relationship between the two variables does not seem to be linear. The original scatterplot seems to indicate there's a curve pattern on the data. The residuals vs. Age plot reveals most points are concentrated to the left, which may suggest the linearity assumption is not met. The Residuals vs. Fitted value plot should display no clear pattern but instead, it is observed that there is a downward curve in the midle of the plot, the points does not seem completely random as they are more concentrated and spreaded more widely on the right side (this may indicate the independence assumption is not met), and on the right side the don't seem to be equally spread around zero since there are more of them at higher positive values (this may suggest there is no equal variance). The Q-Q plot suggests the normality assumption is not met as many points on the right tail go too far up from the dotted line. It may be the case that a logarithmic transformation corrects some of these issues.*\
+
+```{r}
+lm_RespiratoryLogRate <- lm(log(Rate) ~ Age, Respiratory)
+plot(log(Respiratory$Rate) ~ Respiratory$Age, pch = 1, col = 'blue')
+abline(lm_RespiratoryLogRate, col = 'darkblue', lwd = 3)
+
+lm_RespiratoryLogAge <- lm(Rate ~ log(Age), Respiratory)
+plot(Respiratory$Rate ~ log(Respiratory$Age), pch = 1, col = 'blue')
+abline(lm_RespiratoryLogAge, col = 'darkblue', lwd = 3)
+
+lm_RespiratoryLogRateAge <- lm(log(Rate) ~ log(Age), Respiratory)
+plot(log(Respiratory$Rate) ~ log(Respiratory$Age), pch = 1, col = 'blue')
+abline(lm_RespiratoryLogRateAge, col = 'darkblue', lwd = 3)
+```
+\
+*The logarithmic transformation on the Rate variable seems to improve the linearity of the model. I will test the linear model assumptions next to check if some of the previous issues are corrected.*\
+
+```{r}
+summary(lm_RespiratoryLogRate)
+plot(y = lm_RespiratoryLogRate$residual, x = Respiratory$Age, xlab = "Age", ylab = "Residual", main = "Linearity Test", col = 'blue')
+abline(0,0)
+plot(lm_RespiratoryLogRate, which = 1, col = 'blue')
+abline(0,0)
+plot(lm_RespiratoryLogRate, which = 2, col = 'blue')
+```
+\
+*The Residuals vs. Age plot suggests the linearity of the data was improved with the logarithmic transformation of Rate. Although the points still seem to be slightly more densely concentrated to the left, they look now more equally spread around zero. The Residuals vs. Fitted plot still reveals a slight curve in the middle, but the points now seem more random and equally spread around zero than in the previous model. Finally, the Q-Q plot was improved a lot by the logarithmic transformation and it is now possible to say the normality assumption is met. I will continue to use the previous non-transformed model for the following parts as I do not know yet how to correctly interpret the results of a transformed model.*\
+
+- Demonstrate the usefulness of the model by providing 95% prediction intervals for the rate for three individual children: a 1 month old, an 18 months old, and a 29 months old.
+```{r}
+newData <- data.frame(Age = c(1, 18, 29))
+predictions <- data.frame(predict(lm_Respiratory, newData, interval = "prediction")); predictions
+plot(predictions$fit ~ newData$Age, pch = 1, col = 'blue', ylim = c(5, 65))
+lines(newData$Age, predictions$lwr, col = 'red', lty = 2)
+lines(newData$Age, predictions$upr, col = 'red', lty = 2)
+```
+\
+*The graph shows that the prediction intervals for children ages 1, 18, and 29 months are very wide. Having a range of around $\pm15.4$ around the fit value (which coversalmost half of the total range shown on the y axis), the prediction intervals don't seem to be very useful.*\
+
+
+**Question 3: THE DRAMATIC U.S. PRESIDENTIAL ELECTION OF 2000**\
+
+- Make a scatterplot of the variables Buchanan2000 and Bush2000. What evidence is there in the scatterplot that Buchanan received more votes than expected in Palm Beach County?
+```{r}
+Elections <- read.csv('Elections.csv')
+plot(Elections$Buchanan2000 ~ Elections$Bush2000, pch = 1, col = 'blue')
+lm_Elections <- lm(Buchanan2000 ~ Bush2000, Elections)
+summary(lm_Elections)
+abline(lm_Elections, col = 'darkblue', lwd = 3)
+```
+\
+*The scatterplot suggests there is a correlation between Bush2000 and Buchanan2000 that appears to be linear. It appears that there are two outliers: Dade$(289456, 561)$ and Palm Beach$(152846, 3407)$. While the number of votes for Bush in Palm Beach does not raise any concerns as there are another four counties where he got more votes, the number of votes for Buchanan in Palm Beach does appear to be quite unusual, as it more than doubles the second largest number of votes he got in any county. When creating a linear regression model to predict Buchanan2000 with Bush2000, the R-squared value is only $R ^ 2 = 0.3795$, most likely because of the Palm Beach outlier.*\
+
+- Analyze the data without Palm Beach County results to obtain an equation for predicting Buchanan votes from Bush votes. You should consider transformations (think log transformations etc) for both variables if you think the original relationship is nonlinear.
+```{r}
+Elections2 <- Elections[1:66,]
+plot(Elections2$Buchanan2000 ~ Elections2$Bush2000, pch = 1, col = 'blue')
+lm_Elections2 <- lm(Buchanan2000 ~ Bush2000, Elections2)
+abline(lm_Elections2, col = 'darkblue', lwd = 3)
+summary(lm_Elections2)
+
+lm_Elections2LogBuchanan2000 <- lm(log(Buchanan2000) ~ Bush2000, Elections2)
+plot(log(Elections2$Buchanan2000) ~ Elections2$Bush2000, pch = 1, col = 'blue')
+abline(lm_Elections2LogBuchanan2000, col = 'darkblue', lwd = 3)
+summary(lm_Elections2LogBuchanan2000)
+
+lm_Elections2LogBush2000 <- lm(Buchanan2000 ~ log(Bush2000), Elections2)
+plot(Elections2$Buchanan2000 ~ log(Elections2$Bush2000), pch = 1, col = 'blue')
+abline(lm_Elections2LogBush2000, col = 'darkblue', lwd = 3)
+summary(lm_Elections2LogBush2000)
+
+lm_Elections2LogBuchanan2000Bush2000 <- lm(log(Buchanan2000) ~ log(Bush2000), Elections2)
+plot(log(Elections2$Buchanan2000) ~ log(Elections2$Bush2000), pch = 1, col = 'blue')
+abline(lm_Elections2LogBuchanan2000Bush2000, col = 'darkblue', lwd = 3)
+summary(lm_Elections2LogBuchanan2000Bush2000)
+```
+\
+*The data now seems to follow a linear correlation even more. The linear regression model is now better adjusted for the data points with an R-squared value of $R ^ 2 = 0.7518$. It seems like the Palm Beach outlier is in fact very unusual and Buchanan's votes do not predict Bush's votes as well as for the rest of the counties. When applying a logarithmic transformation to both variables, the model seems to improve even more with an R-squared value of $R ^ 2 = 0.8658$*\
+
+- Include the output from the final regression model that you used, as well as evidence that the model fits the assumptions reasonably well.\
+*Simple Linear Model:*
+```{r}
+summary(lm_Elections2)
+plot(y = lm_Elections2$residual, x = Elections2$Bush2000, xlab = "Bush2000", ylab = "Residual", main = "Linearity Test Buchanan2000 vs. Bush2000")
+abline(0,0)
+
+plot(lm_Elections2, which = 1)
+abline(0,0)
+
+plot(lm_Elections2, which = 2)
+```
+\
+*Log(Buchanan2000) vs. Log(Bush2000) Model:*
+```{r}
+summary(lm_Elections2LogBuchanan2000Bush2000)
+plot(y = lm_Elections2LogBuchanan2000Bush2000$residual, x = log(Elections2$Bush2000), xlab = "log(Bush2000)", ylab = "Residual", main = "Linearity Test Log(Buchanan2000) vs. Log(Bush2000)")
+abline(0,0)
+
+plot(lm_Elections2LogBuchanan2000Bush2000, which = 1)
+abline(0,0)
+
+plot(lm_Elections2LogBuchanan2000Bush2000, which = 2)
+```
+\
+*The Log(Buchanan2000) vs. Log(Bush2000) Model seems to improve on the simple linear model on all three tests. The linearity test shows data more evenly spread around zero, the Residuals vs. Fitted plot meets both the independence (the points look more random) and equal variance tests (the points look more equally spread around zero), and the Q-Q plot corrects the outlier at the bottom left corner the simple linear model had. *\
+
+- Obtain a 95% prediction interval for the number of Buchanan votes in Palm Beach from this result, assuming the relationship is the same in this county as in the others. If it is assumed that Buchanan’s actual count contains a number of votes intended for Gore, what can be said about the likely size of this number from the prediction interval?
+```{r}
+newData <- data.frame(Bush2000 = c(Elections[which(Elections$County == 'Palm Beach'),]$Bush2000))
+predict(lm_Elections2, newData, interval = "prediction")
+Elections[which(Elections$County == 'Palm Beach'),]
+```
+\
+*I do not know how to change the scales for Bush2000 or Buchanan2000 to a logarithmic scale, so I will continue to use the simple linear regression model without transformations. The prediction interval obtained from the simple linear model model for the number of Buchanan votes is $[364.709, 830.9264]$, with a predicted estimate of 597.7677. The actual number of votes Buchanan obtained in Palm Beach is 3407, which is too far from the prediction interval calculated with the rest of the data and is 569.95% of the predicted value. If one were to assume that this actual number of Buchanan votes in Palm Beach contains a number of votes intended for Gore, this number votes would be between 364.709 and 830.9264. Since the actual number of votes that gave Bush the win in Florida was less than 400, it is most likely the case that Al Gore would've won the election if the ballots in Palm Beach were designed appropriately.*

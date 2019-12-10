@@ -1,0 +1,254 @@
+---
+title: "Methods and Data Analysis 3"
+author: "Sebastián Soriano Pérez [ss1072]"
+date: "9/27/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(arm)
+library(pROC)
+library(e1071)
+library(caret)
+library(knitr)
+```
+```{r echo = FALSE}
+# Prepare data
+smoking <- read.csv('smoking.csv', na.strings = "NA")
+smoking$premature <- rep(0, nrow(smoking))
+smoking$premature[smoking$gestation < 270] <- 1
+smoking <- smoking[, c('parity', 'mrace', 'mage', 'med', 'mht',
+                     'mpregwt', 'inc', 'smoke', 'premature')]
+newlevels <- c('white', 'white', 'white', 'white', 'white', 'white', 'mexican',
+               'black', 'asian', 'mix', 10)
+smoking$mrace <- factor(newlevels[factor(smoking$mrace)])
+smoking$med <- factor(smoking$med)
+smoking$inc <- factor(smoking$inc)
+smoking$smoke <- factor(smoking$smoke)
+#smoking$premature <- factor(smoking$premature)
+smoking1 <- smoking
+smoking1$parity_c = smoking1$parity - mean(smoking1$parity)
+smoking1$mage_c = smoking1$mage - mean(smoking1$mage)
+smoking1$mht_c = smoking1$mht - mean(smoking1$mht)
+smoking1$mpregwt_c = smoking1$mpregwt - mean(smoking1$mpregwt)
+n <- nrow(smoking1)
+#null_model <- glm(premature ~ 1, family = binomial(link = logit), data = smoking1)
+#full_model <- glm(premature ~ parity_c + mrace + mage_c + med + mht_c + mpregwt_c + inc + smoke
+                 #+ parity_c:mage_c + parity_c:mpregwt_c + mage_c:mpregwt_c + mht_c:mpregwt_c,
+                 #family = binomial(link = logit), data = smoking1)
+#model_both <- step(null_model, scope = formula(full_model), 
+                      #direction = 'both', trace = 0, k = log(n))
+#model_forward$call
+#model_forward2 <- step(null_model, scope = formula(full_model),
+                       #direction = 'forward', trace = 0, k = log(n))
+#model_forward2$call
+#model_forward$aic
+#summary(model_forward)
+#model_forward2$aic
+#summary(model_forward2)
+#confint(model_forward, level = 0.95)
+model1 <- glm(formula = premature ~ med + mrace + mpregwt_c + smoke + mht_c, 
+              family = binomial(link = logit),  data = smoking1)
+```
+
+
+**MATERNAL SMOKING AND PRE-TERM BIRTH**\
+
+- **Summary**
+\
+
+By analyzing the data on 869 newborn male babies and their families, a model was created with stepwise selection using BIC as a comparison parameter to interpret and associate the variables that were found to be significant with the response variable of a birth being premature (< 270 days of gestation). Afterwards, the model's accuracy, sensitivity and specificity were compared to a model including the variable mht. The new model improved these values marginally, so it was selected for the data analysis.
+
+The final model estimates that only the variable of mracewhite is significant, but the rest of the mrace variables as well as med, mpregwt_c, smoke, and mht were included because they improve the model overall. The specific coefficient values can be found in the "Model" section.\
+
+
+- **Introduction**
+\
+
+This document presents a model to interpret the impact of several variables on a newborn's chances of being premature. A dataset was analyzed considering the available data in order to find the best model to explain the association between the predictive variables and the response variable through an initial exploratory data analysis (EDA), and later with a stepwise selection in R a logaritmic regression to estimate the probability of being premature. The main focus of this document is to find whether or not smoking during pregnancy had an impact in the chances of having a pre-term birth, and if this chances differ by race.\
+
+- **Data**
+\
+
+The Child Health and Development Studies research was one of the first to collect data to understand and quantify the risk of smoking during pregnancy to the baby's health. The data was collected from 1960 to 1967, and a subset of that data is being analyzed in this document (the variables related to the father's information are neglected for this analysis). 869 cases of newborn male babies who lived at least 28 days are being analyzed (data set smoking.csv). The purpose of this document is to present a statistical model to interpret and understand the correlation between several variables and the chances of having a pre-term birth (< 270 days). The variables being considered for building the model, in association to the response variable for a logarithmic regression model of the probability of having a pre-term birth (premature), are the following:\
+      - Total number of mother's previous pregnancies (parity) (numeric)\
+      - Mother's race or ethnicity (mrace) (categorical)\
+      - Mother's age in years at pregnancy termination (mage) (numeric)\
+      - Mother's education level (med) (categorical)\
+      - Mother's height in inches (mht) (numeric)\
+      - Mother's pre-pregnancy weight in pounds (mpregwt) (numeric)\
+      - Family yearly income in 2500-increment categories (inc) (categorical)\
+      - Indicator for the mother's smoking (smoke) (categorical)\
+A summary of the data variables being analyzed can be found in Annex 1.1. An exploratory data analysis for all variables and plots for their interactions can be found in Annex 1.2.
+
+The EDA suggests none of the numerical variables have a clear association with premature as the boxplots for premature = 0 and premature = 1 do not have noticeable differences. For the categorical varibles, there are more interesting results in the conditional probability tables for each variable and their association with premature. This suggests that the categorical variables should be included in the model to evaluate their significance. The numerical variables do not need any obvious transformations as all of them suggest linear trends. The interactions parity_c:mage_c, parity_c:mpregwt_c, mage_c:mpregwt_c, mht_c:mpregwt_care being considered as those predictors have the largest correlations as seen in Annex 1.1's correlation table.\
+
+- **Model**
+\
+
+Various methods for model selection were tested and interactions discussed in the Data section were considered as part of the full model. Ultimately, a stepwise selection with BIC model and a model including the mht variable (which was thought to be significant) were compared and the one with the best accuracy, sensitivity, and specificity values was selected as the final model. The following was the final model that was obtiained (for the R output, see Annex 1.0):
+
+\
+\[
+\log \left(\frac{\hat{\pi}_i}{1+\hat{\pi}_i}\right) = \hat\beta_0 + \hat\beta_1 (med_{1})_i + \hat\beta_2 (med_{2})_i + \hat\beta_3 (med_{3})_i + \hat\beta_4 (med_{4})_i + \hat\beta_5 (med_{5})_i + \hat\beta_6 (med_{7})_i
+\]
+\[
++ \hat\beta_7 (mrace_{black})_i + \hat\beta_8 (mrace_{mexican})_i + \hat\beta_9 (mrace_{mix})_i + \hat\beta_{10} (mrace_{white})_i 
+\]
+\[
++ \hat\beta_{11} mpregwt_i + \hat\beta_{12} (smoke_{1})_i + \hat\beta_{13} mht_i
+\]
+
+Where $(med{1})_i + (med{2})_i + (med{3})_i + (med{4})_i + (med{5})_i + (med{7})_i \in \{0,1\}$,
+\
+$(med_{1})_i \in \{0,1\}; (med_{2})_i \in \{0,1\}; (med_{3})_i \in \{0,1\}; (med_{4})_i \in \{0,1\}; (med_{5})_i \in \{0,1\}; (med_{7})_i \in \{0,1\}$,
+\
+$(mrace_{black})_i + (mrace_{mexican})_i + (mrace_{mix})_i + (mrace_{white})_i \in \{0,1\}$,
+\
+$(mrace_{black})_i \in \{0,1\}; (mrace_{mexican})_i \in \{0,1\}; (mrace_{mix})_i \in \{0,1\}; (mrace_{white})_i \in \{0,1\}$,
+\
+
+```{r echo = FALSE}
+kable(model1$coefficient, caption = 'Table of coefficients beta_0 to beta_13')
+kable(confint.default(model1), caption = 'Table of the 95% confident intervals for the coefficients beta_0 to beta_13')   #on log odds scale
+```
+
+The only significant variable is mracewhite with a p-value of 0.0383. The other variables were included to improve the model's accuracy, sensitivity, and specificity. The AIC of the model is 823.45.\
+
+The model has the following predicting parameters:  Accuracy = 0.8147296, Sensitivity = 0.02439024, Specificity = 0.99858156 with a 0.5 cutoff. With a mean cutoff, the model has the following values: Accuracy = 0.6214039, Sensitivity = 0.5975610, Specificity = 0.6269504.\
+
+Finally, the ROC curve shows a value of 0.6593. For the full R output see Annex 1.0.\
+
+- **Conclusions and Remarks**
+\
+
+According to this model, it cannot be concluded that mothers who smoke tend to give birth prematurely compared to mothers who do not smoke. The coefficient for smoke1 was not significant (the p-value of 0.1097 indicates we cannot reject the null hypothesis that the coefficient beta_12 is equal to zero). There is not enough evidence to suggest smoking affects the log odds (and thus the odds) of there being a premature birth (< 270 days). \
+
+```{r echo = FALSE}
+kable(exp(model1$coefficient), caption = 'Table of coefficients beta_0 to beta_13 in the odds scale')
+kable(exp(confint.default(model1)), caption = 'Table of the 95% confident intervals for the coefficients beta_0 to beta_13 in the odds scale')   #on odds scale
+```
+
+\
+
+The intercept value indicates that a non smoker mother, with education category 0, of Asian race with mean values for the numeric variables, would have odds of 0.9358967 (log odds of -0.0662501) of having a premature birth vs. having a full-term birth on average. Mothers who smoke have odds of 1.3434559 of having a premature compared to having a full-term birth, although this is not statistically significant as seen by the odds interval of (0.9356378, 1.9290304) with 95% confidence. It includes odds = 1 in the interval, so it is likely that smoking does not have any effect in the chances of having a premature birth. It is likely with 95% confidence that the odds could change by any value between -6.43622% or +92.90304%.\
+
+For the full model in the stepwise selection process the interaction between smoke and race were taken into account. However, this interaction was not statistically significant and the null hypotheses that their coefficients were equal to zero could not be rejected. The following R code shows all the interactions between race and smoke are not significant and should not be included in the model as they do not affect the chances of having a premature birth: "test_model <- glm(formula = premature ~ med + mrace + mpregwt_c + smoke + mht + mrace:smoke, 
+              family = binomial(link = logit),  data = smoking1)
+summary(test_model)".\
+
+```{r echo = FALSE}
+rawresid5 <- residuals(model1,"resp")
+par(mfcol=c(1,2))
+binnedplot(x=smoking1$mpregwt_c,y=rawresid5,xlab="mpregwt centered",
+           col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
+binnedplot(x=smoking1$mht_c,y=rawresid5,xlab="mht centered",
+           col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
+```
+
+There are no outliers on the binned residual plots for the numerial variables, which raises no additional concerns for the final model. Other than the variable of mracewhite no other variables or their interactions showed strong associations to the log odds of the probability of having a premature birth. Maybe other biological or genetic factors have a stronger impact on the birth weight, or maybe a new model taking into account the father's information would provide better results.\
+
+\pagebreak
+
+- **Annex**
+\
+Annex 1.0 Final Model:
+```{r echo = TRUE}
+summary(model1)
+
+
+Conf_mat <- confusionMatrix(as.factor(ifelse(fitted(model1) >= 0.5, "1","0")),
+                            as.factor(smoking1$premature),positive = "1")
+Conf_mat$table
+Conf_mat$overall["Accuracy"];
+Conf_mat$byClass[c("Sensitivity","Specificity")] #True positive rate and True negative rate
+
+#let's repeat with the marginal percentage in the data
+Conf_mat <- confusionMatrix(as.factor(ifelse(fitted(model1) >= mean(smoking1$premature), "1","0")),
+                            as.factor(smoking1$premature),positive = "1")
+Conf_mat$table
+Conf_mat$overall["Accuracy"];
+Conf_mat$byClass[c("Sensitivity","Specificity")]
+#still not moving much.... the model can predict only so well
+
+#ROC curve...
+roc(smoking1$premature,fitted(model1),plot=T,print.thres="best",legacy.axes=T,
+    print.auc =T,col="red3")
+```
+
+\
+Annex 1.1 Data Summary:\
+```{r echo = FALSE}
+smoking2 <- smoking
+smoking2$premature <- factor(smoking2$premature)
+summary(smoking2)
+smoking_num <- smoking[, c('premature', 'parity', 'mage', 'mht', 'mpregwt')]
+cor(smoking_num)
+```
+\
+
+Annex 1.2 Explotarory Data Analysis:\
+```{r echo = FALSE}
+par(mfrow = c(2, 2))
+boxplot(parity ~ premature, data = smoking, ylab = 'parity', pch = 25, xaxt = 'n',
+        xlab = 'premature (< 270 days)', col = c('red3', 'yellow3'),
+        cex = 0.85, main = 'premature vs. parity')
+axis(1, at = c(1, 2), labels = c('No', 'Yes'))
+boxplot(mage ~ premature, data = smoking, ylab = 'mage', pch = 25, xaxt = 'n',
+        xlab = 'premature (< 270 days)', col = c('red3', 'yellow3'),
+        cex = 0.85, main = 'premature vs. mage')
+axis(1, at = c(1, 2), labels = c('No', 'Yes'))
+boxplot(mht ~ premature, data = smoking, ylab = 'mht', pch = 25, xaxt = 'n',
+        xlab = 'premature (< 270 days)', col = c('red3', 'yellow3'),
+        cex = 0.85, main = 'premature vs. mht')
+axis(1, at = c(1, 2), labels = c('No', 'Yes'))
+boxplot(mpregwt ~ premature, data = smoking, ylab = 'mpregwt', pch = 25, xaxt = 'n',
+        xlab = 'premature (< 270 days)', col = c('red3', 'yellow3'),
+        cex = 0.85, main = 'premature vs. mpregwt')
+axis(1, at = c(1, 2), labels = c('No', 'Yes'))
+```
+\
+
+```{r echo = FALSE}
+apply(table(smoking$premature, smoking$mrace)/sum(table(smoking$premature, smoking$mrace)),
+      2, function(x) x / sum(x)) 
+apply(table(smoking$premature, smoking$med)/sum(table(smoking$premature, smoking$med)),
+      2, function(x) x / sum(x)) 
+apply(table(smoking$premature, smoking$inc)/sum(table(smoking$premature, smoking$inc)),
+      2, function(x) x / sum(x)) 
+apply(table(smoking$premature, smoking$smoke)/sum(table(smoking$premature, smoking$smoke)),
+      2, function(x) x / sum(x))
+
+par(mfrow = c(2, 2))
+barplot(table(smoking$premature, smoking$mrace), legend = c('premature = 0', 'premature = 1'),
+        col = c('lightgreen', 'darkgray'), beside = TRUE,
+        xlab = 'mrace')
+barplot(table(smoking$premature, smoking$med), legend = c('premature = 0', 'premature = 1'),
+        col = c('lightgreen', 'darkgray'), beside = TRUE,
+        xlab = 'med')
+barplot(table(smoking$premature, smoking$inc), legend = c('premature = 0', 'premature = 1'),
+        col = c('lightgreen', 'darkgray'), beside = TRUE,
+        xlab = 'inc')
+barplot(table(smoking$premature, smoking$smoke), legend = c('premature = 0', 'premature = 1'),
+        col = c('lightgreen', 'darkgray'), beside = TRUE,
+        xlab = 'smoke')
+```
+\
+
+```{r echo = FALSE}
+binnedplot(y = smoking$premature, x = smoking$parity,
+           xlab = 'parity', ylim = c(0, 1), col.pts = 'navy',
+           ylab = 'premature', main = 'Binned parity and premature cases', col.int = 'white')
+binnedplot(y = smoking$premature, x = smoking$mage,
+           xlab = 'mage', ylim = c(0, 1), col.pts = 'navy',
+           ylab = 'premature', main = 'Binned mage and premature cases', col.int = 'white')
+binnedplot(y = smoking$premature, x = smoking$mht,
+           xlab = 'mht', ylim = c(0, 1), col.pts = 'navy',
+           ylab = 'premature', main = 'Binned mht and premature cases', col.int = 'white')
+binnedplot(y = smoking$premature, x = smoking$mpregwt,
+           xlab = 'mpregwt', ylim = c(0, 1), col.pts = 'navy',
+           ylab = 'premature', main = 'Binned mpregwt and premature cases', col.int = 'white')
+```

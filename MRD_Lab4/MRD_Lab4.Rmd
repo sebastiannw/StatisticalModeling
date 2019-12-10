@@ -1,0 +1,414 @@
+---
+title: "Lab 4"
+author: 'Sebastián Soriano | Juan David Martínez Gordillo - NetID: ss1072 | jdm127'
+date: "October 17, 2019"
+output: pdf_document
+papersize: a3
+header-includes:
+- \usepackage{caption}
+- \usepackage[document]{ragged2e}
+- \usepackage{booktabs}
+- \usepackage{indentfirst}
+- \usepackage{float}
+- \floatplacement{figure}{H}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(knitr)
+library(formatR)
+library(ggplot2)
+library(ggfortify)
+library(quantreg)
+library(gridExtra)
+library(Hmisc)
+library(corrplot)
+library(GGally)
+library(caret)
+library(psych)
+library(car)
+library(huxtable)
+library(stargazer)
+library(DataExplorer)
+library(GGally)
+library(MASS)
+library(data.table)
+library(e1071)
+library(pROC)
+library(tidyverse)
+library(arm)
+library(lme4)
+library(lmerTest)
+library(ggpubr)
+library(rms)
+library(kableExtra)
+
+options(scipen=999)
+
+opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+```
+
+Data load:
+
+\ 
+
+
+```{r, include=TRUE}
+# Read in the data
+Beauty <- read.table ("Beauty.txt", header=T, sep=" ")
+```
+
+\ 
+
+## Exercise 1
+
+\ 
+
+```{r, include=TRUE}
+# Histogram of eval, as it is
+hist_eval <- ggplot(Beauty, aes(x=eval)) + 
+  geom_histogram(color="white", fill="blue") +
+  labs(title="Histogram of "~italic(eval),
+        x ="Eval", y = "Frequency")
+
+hist_eval
+
+# Q-Q plot on eval, as it is
+
+ggqqplot(Beauty$eval) +   labs(title="Q-Q plot of "~italic(eval))
+
+# Shapiro test for normality
+
+shapiro.test(Beauty$eval)
+```
+
+\ 
+
+* Both the QQ plot and the *Shapiro test* point out that *eval* is not normally distributed.
+
+\ 
+
+```{r, include=TRUE}
+# Histogram of eval, as it is
+hist_log.eval <- ggplot(Beauty, aes(x=log(eval))) + 
+  geom_histogram(color="white", fill="blue") +
+  labs(title="Histogram of "~italic(log(eval)),
+        x ="Log(Eval)", y = "Frequency")
+
+hist_log.eval
+
+# Q-Q plot on eval, as it is
+
+ggqqplot(log(Beauty$eval)) +   labs(title="Q-Q plot of "~italic(log(eval)))
+
+# Shapiro test for normality
+
+shapiro.test(log(Beauty$eval))
+```
+
+\ 
+
+* The log transformation actually worsens the normality of *eval*
+
+\ 
+
+```{r, include=TRUE}
+# Histogram of eval, as it is
+hist_sqrt.eval <- ggplot(Beauty, aes(x=sqrt(eval))) + 
+  geom_histogram(color="white", fill="blue") +
+  labs(title="Histogram of "~italic(sqrt(eval)),
+        x ="sqrt(Eval)", y = "Frequency")
+
+hist_sqrt.eval
+
+# Q-Q plot on eval, as it is
+
+ggqqplot(sqrt(Beauty$eval)) +   labs(title="Q-Q plot of "~italic(sqrt(eval)))
+
+# Shapiro test for normality
+
+shapiro.test(sqrt(Beauty$eval))
+```
+
+\ 
+
+* As for the square root transformation it also decreases the normality of *eval*
+
+\ 
+
+```{r, include=TRUE}
+# Histogram of eval, as it is
+hist_cube.eval <- ggplot(Beauty, aes(x=(eval)^(1/3))) + 
+  geom_histogram(color="white", fill="blue") +
+  labs(title="Histogram of "~italic(cubert(eval)),
+        x ="cubert(Eval)", y = "Frequency")
+
+hist_cube.eval
+
+# Q-Q plot on eval, as it is
+
+ggqqplot((Beauty$eval)^(1/3)) +   labs(title="Q-Q plot of "~italic(cubert(eval)))
+
+# Shapiro test for normality
+
+shapiro.test((Beauty$eval)^(1/3))
+```
+
+\ 
+
+* Moreover, the cube root transformation does not enhance the normality of *eval* either.
+
+We will be using the variable *eval* as it is, given the results of our transformations analysis.
+
+\ 
+
+## Exercise 2
+
+\ 
+
+```{r, include=TRUE}
+# Histogram of eval, as it is
+ggplot(Beauty, aes(x=eval, y = beauty)) + geom_point(color = "blue") + 
+  labs(title="Scatter of Eval vs Beauty", x ="Eval", y = "Beauty") + 
+  stat_smooth(method = "lm", col = "red")
+
+```
+
+\ 
+
+* The main effect appears to be a positive relation between *eval* and *beauty*
+
+\ 
+
+```{r, include=TRUE}
+# Histogram of eval vs beauty by courseID
+ggplot(Beauty[which(Beauty$courseID %in% c(0,4,21,22,30,19,17,9,3,6)),],aes(x=eval, y=beauty)) +
+# ggplot(Beauty,aes(x=eval, y=beauty)) +
+  geom_point(alpha = .5,colour="blue") +
+  geom_smooth(method="lm",col="red") +
+  labs(title="Eval vs Beauty - By Course ID") +
+  facet_wrap(~courseID,ncol=5)
+```
+
+\ 
+
+* Comparing the relation between *eval* and *beauty* by Courses shows that the majority of courses have the same positive correlation. However, there are courses for which this relation changes to negative (3, 9, 19, 21). There is also evidence that could lead us to think that there might be different intensities of the relation (the slopes may differ by courses)
+
+\ 
+
+## Exercise 3
+
+\ 
+
+* It is not meaningful since every professor has only one beauty score which is the average of the beauty scores made by the graduate students.
+
+\ 
+
+## Exercise 4
+
+\ 
+
+```{r, include=TRUE}
+Beauty$courseID <- as.factor(Beauty$courseID)
+Beauty$tenured <- factor(Beauty$tenured, levels = c(0,1), labels = c("Not tenured","Tenured"))
+Beauty$minority <- factor(Beauty$minority, levels = c(0,1), labels = c("Not minority","Minority"))
+Beauty$female <- factor(Beauty$female, levels = c(0,1), labels = c("Male","Female"))
+Beauty$formal <- factor(Beauty$formal, levels = c(0,1), labels = c("Not formal","Formal"))
+Beauty$lower <- factor(Beauty$lower, levels = c(0,1), labels = c("Not lower course","Lower course"))
+Beauty$multipleclass <- factor(Beauty$multipleclass, levels = c(0,1), labels = c("Not multiple class","Multiple class"))
+Beauty$nonenglish <- factor(Beauty$nonenglish, levels = c(0,1), labels = c("English education","Non-english education"))
+Beauty$onecredit <- factor(Beauty$onecredit, levels = c(0,1), labels = c("Not one credit course","One credit course"))
+Beauty$tenuretrack <- factor(Beauty$tenuretrack, levels = c(0,1), labels = c("Not tenure track","Tenure track"))
+summary(Beauty)
+#hist(Beauty$beauty)
+```
+
+\ 
+
+Main EDA findings:
+
+* *students* and *didevaluation* are highly correlated (0.97), this could cause problems in the final model due to multicollinearity.
+
+* It seems that the higher the age of a professor the lower the average beauty score, an expected result.
+
+* As seen in the previous items, *beauty* and *eval* show a positive relation, leading us to think that the prettier the professor the higher is going to be his eval score.
+
+* As expected, tenured professors tend to be older than the ones that are not.
+
+* It seems that female professors might have slightly higher beauty scores.
+
+* It appears that formally dressed professors tend to have higher beauty scores.
+
+* Evaluation might be lower for professors that are on a tenure track.
+
+* It seems that female professors might have slightly lower profevaluation scores.
+
+* Lower level courses tend to have higher professor evaluations.
+
+* one-credit courses tend to have higher professor evaluations.
+
+* one-credit courses tend to have a higher percentage of students evaluating.
+
+* Professors that have been educated in a non-English speaking country tend to have lower professor evaluations and course evaluation.
+
+* The percentage of students evaluating seems to have a positive relationship with the evaluation of the professor.
+
+* Profesor evaluation is highly correlated with the course evaluation.
+
+Why not include profevaluation?:
+
+* *profevaluation* and *eval* are simultaneously determined variables. Simultaneity happens when the explanatory variable (in this case profevaluation) is jointly determined with the dependent variable (in this case eval). When a professor receives a high professor evaluation this causes that the course receives a high evaluation as well, at the same time, when a course receives a high evaluation is very likely that the professor receives a high professor evaluation. In simpler terms, X causes Y but Y also causes X. This brings the problem of endogeneity in our model and consequently, our model will depict unexpected results due to this simultaneity bias. 
+
+\ 
+
+## Exercise 5
+
+\ 
+
+```{r, include=TRUE}
+lmer_beauty <- lmer(eval ~ beauty + (1 | profnumber), data = Beauty) ; summary(lmer_beauty)
+dotplot(ranef(lmer_beauty, condVar=TRUE))$profnumber
+gammas <- as.data.frame(ranef(lmer_beauty)$profnumber)
+#rownames(gammas) <- NULL
+gammas$j <- 1:94
+gammas <- gammas[, c(2,1)]
+colnames(gammas) <- c('j', 'gamma_0')
+rows <- seq_len(nrow(gammas) %/% 2)
+kable(list(gammas[rows,1:2],  
+           matrix(numeric(), nrow=0, ncol=1),
+           gammas[-rows, 1:2]), 
+      caption = "This is the caption.",
+      label = "tables", format = "latex", booktabs = TRUE, row.names = FALSE) %>% kable_styling(latex_options = "HOLD_position")
+```
+
+\ 
+
+\[
+\hat{\mathit{eval}}_{i,j} = (\hat\beta_0 + \hat\gamma_{0,j}) + \hat\beta_1 \mathit{beauty}_{i,j}
+\]
+
+\ 
+
+* We have an overall "average" regression line for all professors (rows across profnumbers), which has slope 0.11566 and intercept 3.93893.
+
+* The slope value indicates that the evaluation of a professor increases by 0.11566 for every unit increase of the average beauty score.
+
+* For any distinct professor the baseline eval value can be estimated using both the overall average intercept of 3.93893 plus the random effect gamma for the corresponding profnumber.
+
+* For instance, for professor 1, we have the same slope value of 0.11566, but the resulting intercept value is equal to the sum of the fixed intercept plus the random effect intercept: $3.93893 + 0.0288845 = 3.967815$. We could repeat this same process to calculate the intercept for every other profnumber. 
+
+\ 
+
+## Exercise 6
+
+\ 
+
+```{r, include=TRUE}
+lmer_beauty2 <- lmer(eval ~ beauty + female + onecredit + nonenglish + (1 | profnumber), data = Beauty) ; summary(lmer_beauty2)
+dotplot(ranef(lmer_beauty2, condVar=TRUE))$profnumber
+gammas <- as.data.frame(ranef(lmer_beauty2)$profnumber)
+#rownames(gammas) <- NULL
+gammas$j <- 1:94
+gammas <- gammas[, c(2,1)]
+colnames(gammas) <- c('j', 'gamma_0')
+rows <- seq_len(nrow(gammas) %/% 2)
+kable(list(gammas[rows,1:2],  
+           matrix(numeric(), nrow=0, ncol=1),
+           gammas[-rows, 1:2]), 
+      caption = "This is the caption.",
+      label = "tables", format = "latex", booktabs = TRUE, row.names = FALSE) %>% kable_styling(latex_options = "HOLD_position")
+```
+
+\ 
+
+\[
+\hat{\mathit{eval}}_{i,j} = (\hat\beta_0 + \hat\gamma_{0,j}) + \hat\beta_1 \mathit{beauty}_{i,j} + \hat\beta_2 \mathit{female}_{i,j} + \hat\beta_3 \mathit{onecredit}_{i,j} + \hat\beta_4 \mathit{nonenglish}_{i,j}
+\]
+
+\ 
+
+* We have an overall "average" regression line for all professors (rows across profnumbers), which has a baseline intercept of 4.03261 and slope values of 0.14074 for beauty, -0.20229 for female, 0.46495 for one-credit, and -0.35460 for nonenglish.
+
+* For beauty, the slope value indicates that the evaluation of a professor increases by 0.14074 for every unit increase of the average beauty score.
+
+* For female, the slope value indicates that the evaluation of a professor decreases by 0.20229 if they are female.
+
+* For one-credit, the slope value indicates that the evaluation of a professor increases by 0.46495 if the course is a one-credit course.
+
+* For nonenglish, the slope value indicates that the evaluation of a professor decreases by 0.35460 if the professor received an undergraduate education from a non-English speaking country.
+
+* For any distinct professor the baseline eval value can be estimated using both the overall average intercept of 4.03261 plus the random effect gamma for the corresponding profnumber.
+
+* For instance, for professor 1, we have the same slope values for the predictors, but the resulting intercept value is equal to the sum of the fixed intercept plus the random effect intercept: $4.03261 + 0.1029262 = 4.135536$. We could repeat this same process to calculate the intercept for every other profnumber. 
+
+\ 
+
+## Exercise 7
+
+\ 
+
+* We can see from the regression report in exercise 5, that the variance across professors has a value of 0.4129, while the variation for different scores for the same professor is 0.3724. This is expected, since a professor will teach with the same quality even if he teaches many different courses, however, the higher variance across multiple different professors is very likely given the differences of styles, preparation, and teaching quality.  
+
+\ 
+
+## Exercise 8
+
+\ 
+
+```{r, include=TRUE}
+lmer_beauty3 <- lmer(eval ~ beauty + female + onecredit + nonenglish + (1 | profnumber) + (beauty | courseID), data = Beauty) ; summary(lmer_beauty3)
+dotplot(ranef(lmer_beauty3, condVar=TRUE))$profnumber
+dotplot(ranef(lmer_beauty3, condVar=TRUE))$courseID
+```
+
+\ 
+
+* All of the results for the fixed effects did change once we took into account a variation of the intercept and coefficient of beauty by courseID. 
+
+* The baseline intercept changed from 4.03261 to 4.03818, and slope values changed from 0.14074 to 0.12763 for beauty, from -0.20229 to -0.21094 for female, from 0.46495 to 0.38412 for onecredit, and from -0.35460 to -0.34472 for nonenglish. It is important to notice the coefficient for beauty became not statistically significant in the new model.
+
+* These changes are due to the fact that the first model was not taking into account the variations in the effect of beauty that could differ by the different courses (courseID).
+
+\ 
+
+## Exercise 9
+
+\ 
+
+```{r, include=TRUE}
+ggplot(Beauty, aes(x = female, y = eval, fill = female)) +
+       geom_boxplot()
+ggplot(Beauty, aes(x = onecredit, y = eval, fill = onecredit)) +
+       geom_boxplot()
+ggplot(Beauty, aes(x = nonenglish, y = eval, fill = nonenglish)) +
+       geom_boxplot()
+```
+
+\ 
+
+* The first box plot shows that female professors appear to receive lower class evaluations.
+
+* The second box plot shows that one credit classes seem to be better evaluated than the rest of the classes.
+
+* The third box plot shows that professors who received education in a non-English speaking country seemed to receive lower class evaluations than the rest of the professors.
+
+\ 
+
+## Exercise 10
+
+\ 
+
+```{r, include=TRUE}
+lmer_beauty3 <- lmer(eval ~ beauty + female + onecredit + nonenglish + lower + (1 | profnumber) + (beauty | courseID), data = Beauty) ; summary(lmer_beauty3)
+```
+
+\ 
+
+* We decided to add the variable lower to the previous model. The resulting model's R output is shown above. lower turned out not to be significant since we cannot reject the hypothesis that it is equal to zero with 95% significance (its p-value is 0.23).
+
+
+
+

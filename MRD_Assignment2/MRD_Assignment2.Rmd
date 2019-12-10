@@ -1,0 +1,237 @@
+---
+title: "Methods and Data Analysis 2"
+author: "Sebastián Soriano Pérez [ss1072]"
+date: "9/12/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(lattice)
+```
+
+**Question 1: OLD FAITHFUL**\
+
+- Fit a regression of interval on duration and day (treated as a categorical/factor variable). Is there a significant difference in mean intervals for any of the days (compared to the first day)? Interpret the effects of controlling for the days (do so only for the days with significant effects, if any).
+
+```{r}
+OldFaithful <- read.csv('OldFaithful.csv')
+lm_OldFaithful <- lm(Interval ~ Duration + as.factor(Date), OldFaithful)
+summary(lm_OldFaithful)
+confint(lm_OldFaithful, level = 0.95)
+```
+\
+*From the model summary, we can observe that all of the categories of Date have a p-value greater than 0.455 and t-values that are close to 0. This means that for all of them, we cannot reject the null hypothesis that they are equal to zero and they do not seem to be useful predictors in the model. Compared to the first day, none of the days seem to have any impact on the response variable.*\
+
+- Perform an F-test to compare this model to your model for this data from the last homework. In context of the question, what can you conclude from the results of the F-test?
+```{r}
+lm_OldFaithful_old <- lm(Interval ~ Duration, OldFaithful)
+anova(lm_OldFaithful, lm_OldFaithful_old)
+```
+\
+*With a p-value of 0.9828 we cannot reject the null hypothesis that the RSS values for both models are equal to each other. Therefor we cannot determine that one of the models is more accurate than the other, although the new model that takes Date into account does have a slightly smaller RSS.*\
+
+- Using k-fold cross validation (with k=10), compare the average RMSE for this model and the average RMSE for your model from the last homework. Which model appears to have higher predictive accuracy based on the average RMSE values?
+```{r}
+set.seed(1) # Seed to ensure the results are reproducible
+OldFaithful <- OldFaithful[sample(nrow(OldFaithful)),] # Randomly re-shuffle the data
+K <- 10 # Define the number of folds
+# Define a matrix to save the RSMEs
+RSME <- matrix(0, nrow = K, ncol = 1) # Current model
+RSME_old <- matrix(0, nrow = K, ncol = 1) # Old model
+# Split the row indexes into k equal parts
+kth_fold <- cut(seq(1, nrow(OldFaithful)), breaks = K, labels = FALSE)
+for(k in 1:K){ #k-fold cross validation for-loop
+  test_index <- which(kth_fold == k)
+  train <- OldFaithful[-test_index,]
+  test <- OldFaithful[test_index,]
+  lm_train <- lm(Interval ~ Duration + as.factor(Date), train)
+  lm_train_old <- lm(Interval ~ Duration, train)
+  predicted_test_values <- predict(lm_train, test)
+  predicted_test_values_old <- predict(lm_train_old, test)
+  RSME[k,] <- sqrt(mean((test$Interval - predicted_test_values) ^ 2))
+  RSME_old[k,] <- sqrt(mean((test$Interval - predicted_test_values_old) ^ 2))
+}
+mean(RSME) # Current model RSME
+mean(RSME_old) # Old model RSME
+```
+\
+*The old model has a better predictive value since its RSME is lower.*\
+
+
+\pagebreak
+**Question 2: MATERNAL SMOKING AND BIRTH WEIGHTS**\
+
+- **Summary**
+\
+
+By analyzing the data on 869 newborn male babies and their families, a model was created with forward selection using AIC to interpret and associate the variables that were found to be significant with the response variable of weight:
+\[
+\hat{bwt.oz}_i = \hat\beta_0 + \hat\beta_1 smoke_i + \hat\beta_2 mht_i + \hat\beta_3 (mrace_{black})_i + \hat\beta_4 (mrace_{mexican})_i + \hat\beta_5 (mrace_{mix})_i
+\]
+\[
++ \hat\beta_6 (mrace_{white})_i + \hat\beta_7 mpregwt_i + \hat\beta_8 parity_i
+\]
+
+The model estimates that these variables are significant when trying to create a model for interpretation and association of the data. The specific coefficient values can be found in the "Model" section.\
+
+However, the final model's adjusted R-squared value of 0.1435 indicates that the model only explains a small proportion of the weight differences among newborn male babies with the variables that were considered in the final dataset.\
+
+- **Introduction**
+\
+
+This document presents a model to interpret the impact of several variables on a newborn's weight at birth. A dataset was analyzed considering the available data in order to find the best model to explain the association between the predictive variables and the response variable through an initial exploratory data analysis (EDA), and later with a forward selection in R. The main focus of this document is to find whether or not smoking during pregnancy had an impact in the child's weight.\
+
+- **Data**
+\
+
+The Child Health and Development Studies research was one of the first to collect data to understand and quantify the risk of smoking during pregnancy to the baby's health. The data was collected from 1960 to 1967, and a subset of that data is being analyzed in this document (the variables related to the father's information are neglected for this analysis). 869 cases of newborn male babies who lived at least 28 days are being analyzed (data set smoking.csv). The purpose of this document is to present a statistical model to interpret and understand the correlation between several variables and the baby's birth weight. The variables being considered for building the model, in association to the response variable of the baby's birth weight in ounces (bwt.oz), are the following:\
+      - Total number of mother's previous pregnancies (parity)\
+      - Mother's race or ethnicity (mrace)\
+      - Mother's age in years at pregnancy termination (mage)\
+      - Mother's education level (med)\
+      - Mother's height in inches (mht)\
+      - Mother's pre-pregnancy weight in pounds (mpregwt)\
+      - Family yearly income in 2500-increment categories (inc)\
+      - Indicator for the mother's smoking (smoke)\
+A summary of the data variables being analyzed can be found in Annex 2.1. A table of the correlation between all variables and plots for their interactions can be found in Annex 2.2.\
+
+- **Model**
+\
+
+Various methods for model selection were tested and interactions between predictors were considered as part of the full model. Ultimately, a forward selection with AIC model and a forward selection with BIC model were compared and the one with the higher adjusted R-squared value was selected as the final model. Using a forward selection approach with AIC as a selection criterion, the following model was obtained:
+```{r echo = FALSE}
+# Prepare data
+smoking <- read.csv('smoking.csv', na.strings = "NA")
+smoking <- smoking[, c('bwt.oz', 'parity', 'mrace', 'mage', 'med', 
+                     'mht', 'mpregwt', 'inc', 'smoke')]
+newlevels <- c('white', 'white', 'white', 'white', 'white', 'white', 'mexican',
+               'black', 'asian', 'mix', 10)
+smoking$mrace <- factor(newlevels[factor(smoking$mrace)])
+smoking$med <- factor(smoking$med)
+smoking$inc <- factor(smoking$inc)
+smoking$smoke <- factor(smoking$smoke)
+smoking_num <- smoking[, c('bwt.oz', 'parity', 'mage', 'mht', 'mpregwt')]
+```
+```{r echo = TRUE}
+n <- nrow(smoking)
+null_model <- lm(bwt.oz ~ 1, data = smoking)
+full_model <- lm(bwt.oz ~ parity + mrace + mage + med + mht + mpregwt + inc + smoke
+                 + parity:mage + parity:mpregwt + mage:mpregwt +mht:mpregwt,
+                 data = smoking)
+model_forward <- step(null_model, scope = formula(full_model), 
+                      direction = 'forward', trace = 0)
+#model_forward$call
+#model_forward2 <- step(null_model, scope = formula(full_model),
+                       #direction = 'forward', trace = 0, k = log(n))
+#model_forward2$call
+summary(model_forward)
+#summary(model_forward2)
+confint(model_forward, level = 0.95)
+```
+\
+\[
+\hat{bwt.oz}_i = \hat\beta_0 + \hat\beta_1 smoke_i + \hat\beta_2 mht_i + \hat\beta_3 (mrace_{black})_i + \hat\beta_4 (mrace_{mexican})_i + \hat\beta_5 (mrace_{mix})_i
+\]
+\[
++ \hat\beta_6 (mrace_{white})_i + \hat\beta_7 mpregwt_i + \hat\beta_8 parity_i
+\]
+
+Where $(mrace_{black})_i + (mrace_{mexican})_i + (mrace_{mix})_i + (mrace_{white})_i \in \{0,1\}$,
+\
+$(mrace_{black})_i \in \{0,1\}; (mrace_{mexican})_i \in \{0,1\}; (mrace_{mix})_i \in \{0,1\}; (mrace_{white})_i \in \{0,1\}$,
+\
+$\hat\beta_0 = 41.70824$, $\hat\beta_1 = -9.35194$, $\hat\beta_2 = 0.93387$, $\hat\beta_3 = -0.88802$, $\hat\beta_4 = 11.23603$, $\hat\beta_5 = 5.95467$, $\hat\beta_6 = 7.93888$, $\hat\beta_7 = 0.10808$, and $\hat\beta_8 = 0.66507$.
+\
+
+The most significant variable is smoke with a p-value of -8.117. The model has a residual standard error of 16.71 on 860 degrees of freedom. It also has a low adjusted R-squared value of 0.1435, which indicates it does not explain most of the available data.\
+
+The model assumptions of linearity, independence and equal variance seem to be met. The normality assumptions may be a reason to worry about since the Q-Q shows tails on both sides. See Annex 2.4 to Annex 2.6.\
+
+- **Conclusions and Remarks**
+\
+
+It can be concluded that mothers who smoke do tend to give birth to babies with lower weights than mothers who do not smoke. The intercept value indicates that a non smoker mother, of Asian race, income category 1, with values of 0 for the rest of the variables, would give birth to male babies of 41.70824 ounces on average. Mothers who smoke would give birth to babies 9.35194 ounces lighter on average as indicated by $\hat\beta_1$. A likely range for the difference in birth weights for smokers and non-smokers would be the one indicated by the smoke1 confidence interval of (-11.61335023, -7.0905277) ounces with 95% confidence.\
+
+For the full model in the forward selection process the interaction between smoke and race were taken into account. However, this interaction was not statistically significant and the null hypotheses that their coefficients were equal to zero could not be rejected. However, when looking at the model itself, it can be noted that the interaction between smoke and mracemexican could be significant. There is no evidence in the data to support the claim that smoking and birth weight differ among the other races. Other than the variables of smoke, race, mpregwt and parity, no other variables or their interactions showed strong associations to the response variable.\
+
+```{r echo = TRUE}
+test_model <- lm(formula = bwt.oz ~ smoke + mht + mrace + mpregwt + parity
+                 + smoke:mrace, 
+    data = smoking)
+summary(test_model)
+```
+
+For the rest of the variables: each additional inch in mht adds an estimated 0.93387 ounces to bwt.oz; being black, Mexican, mix, or white insterad of Asian adds either -0.88802, 11.23603, 5.95467, or 7.93888 ounces to bwt.oz, respectively; each additional pound in mpregwt adds an extra 0.10808 ounces to bwt.oz; finally, each additional previous birth in parity adds an extra 0.66507 ounces to bwt.oz. Of all these associations, all are significant but mraceblack and mracemix, for which we cannot reject the null hypotheses that they are equal to zero and therefore they are most likely not statistically significant. This indicates that mothers of black or mixed race do not have any impact on their male babies birth weight because of their race.\
+
+Although this analysis suggests some of the predictors do have a very significant impact on the birth weight, the low R-squared value and the lack of a strong correlation between the predictor variables and the response variable suggest that there may be other factors that influence and predict birth weight much better. Maybe other biological or genetic factors have a stronger impact on the birth weight, or maybe a new model taking into account the father's information would provide better results.\
+
+\pagebreak
+
+- **Annex**
+\
+
+Annex 2.1:
+```{r echo = FALSE}
+summary(smoking)
+```
+\
+
+Annex 2.2
+```{r echo = FALSE}
+cor(smoking_num)
+```
+\
+
+Annex 2.3:\
+```{r echo = FALSE}
+pairs(smoking[,!is.element(colnames(smoking),c('mrace','med','inc', 'smoke'))], col = 'turquoise')
+```
+
+```{r echo = FALSE}
+par(mfrow = c(2, 2))
+plot(smoking$bwt.oz ~ smoking$mrace, pch = 1, col = 'red')
+plot(smoking$bwt.oz ~ smoking$med, pch = 1, col = 'blue')
+plot(smoking$bwt.oz ~ smoking$inc, pch = 1, col = 'orange')
+plot(smoking$bwt.oz ~ smoking$smoke, pch = 1, col = 'yellow')
+```
+\
+
+Annex 2.4: Checking model assumptions - Linearity\
+```{r echo = FALSE}
+par(mfrow = c(2, 2))
+plot(y = model_forward$residual, x = smoking$parity, xlab = "parity", ylab = "Residual", col = 'red')
+abline(0,0)
+plot(y = model_forward$residual, x = smoking$mage, xlab = "mage", ylab = "Residual", col = 'orange')
+abline(0,0)
+plot(y = model_forward$residual, x = smoking$mht, xlab = "mht", ylab = "Residual", col = 'yellow2')
+abline(0,0)
+plot(y = model_forward$residual, x = smoking$mpregwt, xlab = "mpregwt", ylab = "Residual", col = 'green2')
+abline(0,0)
+```
+
+```{r echo = FALSE}
+par(mfrow = c(2, 2))
+plot(y = model_forward$residual, x = smoking$mrace, xlab = "mrace", ylab = "Residual", col = 'blue')
+abline(0,0)
+plot(y = model_forward$residual, x = smoking$med, xlab = "med", ylab = "Residual", col = 'purple')
+abline(0,0)
+plot(y = model_forward$residual, x = smoking$inc, xlab = "inc", ylab = "Residual", col = 'red')
+abline(0,0)
+plot(y = model_forward$residual, x = smoking$smoke, xlab = "smoke", ylab = "Residual", col = 'orange')
+abline(0,0)
+```
+\
+
+Annex 2.5: Checking model assumptions - Independence and equal variance\
+```{r echo = FALSE}
+plot(model_forward, which = 1, col = 'gold')
+```
+\
+
+Annex 2.6: Checking model assumptions - Normality\
+```{r echo = FALSE}
+plot(model_forward, which = 2, col = 'darkblue')
+```

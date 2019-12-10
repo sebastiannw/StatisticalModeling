@@ -1,0 +1,161 @@
+---
+title: "MRD_Assignment4"
+author: "Sebastián Soriano Pérez"
+date: "11/11/2019"
+output:
+  pdf_document: default
+  html_document: default
+header-includes:
+- \usepackage{caption}
+- \usepackage[document]{ragged2e}
+- \usepackage{booktabs}
+- \usepackage{indentfirst}
+- \usepackage{float}
+- \floatplacement{figure}{H}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(arm); library(pROC); library(e1071); library(caret); library(knitr)
+library(rms); library(ggplot2); library(lme4); library(rstan); library(brms)
+library(sjPlot); library(dplyr); library(kableExtra); library(formatR); library(ggfortify)
+library(quantreg); library(gridExtra); library(Hmisc); library(corrplot); library(GGally)
+library(psych); library(car); library(huxtable); library(stargazer); library(DataExplorer)
+library(GGally); library(MASS); library(data.table); library(tidyverse); library(lmerTest)
+library(ggpubr); library(reshape2); library(mice); library(naniar)
+rb <- c('red', 'orange', 'yellow', 'green', 'blue', 'purple')
+```
+
+**Question 1: MISSING DATA MECHANICS**\
+
+- Create a dataset with 30% of the age values missing completely at random, leaving all values of diameter observed. Report the R commands you used to make the dataset. Also report the dataset values after you made the ages missing. (This is so we can tell which cases you made missing.)
+
+```{r data, echo = TRUE}
+#Loading dataset and creating random missing values for age
+trees <- read.csv('treeage.txt')
+set.seed(1)
+trees[sample(nrow(trees), 6),]$age <- NA
+kable(trees, row.names = TRUE,
+      label = "tables", format = "latex", booktabs = TRUE) %>% kable_styling(
+        latex_options = "HOLD_position"
+        )
+```
+
+- Use a multiple imputation approach to fill in missing ages with the R software mice using a default application, i.e., no transformations in the imputation models. Create m = 50 imputed datasets. Use multiple imputation diagnostics to check the quality of the imputations of age, looking at both the marginal distribution of age and the scatter plot of age versus diameter. Run the diagnostics on at least two of the completed datasets. Turn in the graphical displays you made (showing results for at least two completed datasets) and your conclusions about the quality of the imputation model.
+
+```{r imputation, echo = TRUE, out.width = '50%', out.height = '33%'}
+#Adding imputations with 'norm' and 'pmm'
+trees_nrm <- mice(trees, m = 50, defaultMethod = c('norm'), print = F)
+trees_pmm <- mice(trees, m = 50, defaultMethod = c('pmm'), print = F)
+par(mfcol = c(1, 2))
+stripplot(trees_nrm, age ~ .imp, col = c('darkgray', 'gold'), pch = c(1, 20))
+stripplot(trees_pmm, age ~ .imp, col = c('darkgray', 'gold'), pch = c(1, 20))
+```
+
+*The pmm method produced all imputed values within the range of values for the actual remaining data. The norm method includes values that would seem to be outliers among the rest of the data. For this reason I will choose the pmm method.*
+
+```{r imputation_plots, echo = TRUE, out.width = '50%', out.height = '33%'}
+#Plotting two random datasets for 'pmm'
+#Adding imputed column to identify rows with imputed values
+#set.seed(1233)
+s1 <- as.integer(runif(1, 1, 50))
+s2 <- as.integer(runif(1, 1, 50))
+
+set1 <- complete(trees_pmm, s1)
+set1$imputed <- 0
+set1[is.na(trees$age),]$imputed <- 1
+set1$imputed <- as.factor(set1$imputed)
+
+set2 <- complete(trees_pmm, s2)
+set2$imputed <- 0
+set2[is.na(trees$age),]$imputed <- 1
+set2$imputed <- as.factor(set2$imputed)
+
+#Plotting both datasets
+par(mfcol = c(1, 2))
+ggplot(set1, aes(x = diameter, y = age, color = imputed)) + geom_point() +
+  theme_minimal() + scale_color_brewer(palette = 10) +
+  theme(legend.position = "bottom") + ggtitle('set1')
+
+ggplot(set2, aes(x = diameter, y = age, color = imputed)) + geom_point() +
+  theme_minimal() + scale_color_brewer(palette = 11) +
+  theme(legend.position = "bottom") + ggtitle('set1')
+```
+
+*The scatterplots for two random sets of imputations (set1 & set2) show that the pmm method seems to produce values that match the linear relationship present for the rest of the data between age and diameter*
+
+- Estimate a regression of age on diameter. Apply the multiple imputation combining rules to obtain point and variance estimates for the regression parameters that account for missing data. What can you conclude about the relationship between age and diameter?
+
+```{r model, echo = TRUE}
+lms_trees <- with(trees_pmm, lm(age ~ diameter))
+lm_trees = pool(lms_trees)
+kable(summary(lm_trees), row.names = TRUE,
+      label = "tables", format = "latex", booktabs = TRUE) %>% kable_styling(
+        latex_options = "HOLD_position"
+        )
+```
+
+*Although the model concludes that the intercept cannot be rejected to be zero, there exists significant correlation between diameter and age. For every unit increase in a tree's diameter, it could be expected that the tree would be 9.12 units older.*
+
+\
+
+**Question 2: MULTIPLE IMPUTATION IN NHANES DATA**\
+
+- Use a multiple imputation approach to fill in missing values with the R software mice using a default application (no transformations in the modeling).
+\
+-- Create m = 10 imputed datasets.
+\
+-- Use multiple imputation diagnostics to check the quality of the imputations, looking at both marginal distributions and scatter plots. Run the diagnostics on at least two of the completed datasets. Turn in plots for bmxbmi (BMI measurement) by age and bmxbmi by riagendr (gender).
+\
+-- What are your conclusions about the quality of the imputation model?
+
+```{r data2, echo = TRUE}
+#Loading dataset and deleting unnecessary columns
+nhanes = read.csv('nhanes.csv')
+nhanes$wtmec2yr <- NULL
+nhanes$sdmvstra <- NULL
+nhanes$sdmvpsu <- NULL
+nhanes <- replace_with_na_all(data = nhanes, condition = ~.x == '.')
+
+nhanes_pmm <- mice(nhanes, m = 10, defaultMethod = c("pmm"), print = F)
+```
+
+
+```{r imputation_plots2, echo = TRUE, out.width = '50%', out.height = '33%'}
+#Plotting imputation sets for age, bmxthicr, dmdeduc, and bmxbmi
+stripplot(nhanes_pmm, age ~ .imp, col = c('black', 'gold'), pch = c(1, 1))
+stripplot(nhanes_pmm, bmxthicr ~ .imp, col = c('black', 'gold'), pch = c(1, 1))
+stripplot(nhanes_pmm, dmdeduc ~ .imp, col = c('black', 'gold'), pch = c(1, 1))
+stripplot(nhanes_pmm, bmxbmi ~ .imp, col = c('black', 'gold'), pch = c(1, 1))
+```
+
+
+```{r additional_plots, echo = TRUE, out.width = '50%', out.height = '33%'}
+#Plotting bmxbmi by age and bmxbmi by riagendr
+xyplot(nhanes_pmm, bmxbmi ~ age | .imp, pch = c(1, 1), cex = 1.4, col = c('black', 'gold'))
+xyplot(nhanes_pmm, bmxbmi ~ riagendr | .imp, pch = c(1, 1), cex = 1.4, col = c('black', 'gold'))
+```
+
+*The imputation model used was 'pmm'. It seems to do a very good job as most of the values are within the range of the existing data points. I will stick with this model. I tried the 'norm' model but there were too manby outliers imputed.*
+
+\
+
+- Run a model that predicts BMI from some subset of age, gender, race, education, and income. Apply the multiple imputation combining rules to obtain point and variance estimates for the regression parameters that account for missing data. Interpret the results of your final model.
+
+```{r complete3, echo = TRUE, out.width = '50%', out.height = '33%'}
+nhanes_6 = complete(nhanes_pmm, 6)
+null_model = lm(bmxbmi ~ 1, data = nhanes_6)
+full_model = lm(bmxbmi ~ age + ridageyr + riagendr + ridreth2 + dmdeduc + indfminc + age:dmdeduc +
+                  riagendr:ridreth2, data = nhanes_6)
+lm_nhanes_6 <- step(null_model, scope = formula(full_model), direction = 'both', trace = 0)
+summary(lm_nhanes_6)
+```
+
+
+```{r complete2, echo = TRUE, out.width = '50%', out.height = '33%'}
+lm_nhanes <- with(nhanes_pmm, lm(bmxbmi ~ ridageyr + age + dmdeduc + riagendr + ridreth2 +
+                                        indfminc + age:dmdeduc + riagendr:ridreth2))
+summary(pool(lm_nhanes))
+```
+
+*All coefficients are significant in the final pooled model. dmdeduc is the largest coefficient, for which every unit increase represents a 262.3 increase in bmxbmi. On the other hand, every unit increase in ridreth2 represents an 11.1 decrease in bmxbmi.*

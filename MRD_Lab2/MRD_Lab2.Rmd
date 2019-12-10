@@ -1,0 +1,334 @@
+---
+title: "Lab 2"
+author: 'Sebastián Soriano Pérez | Juan David Martínez Gordillo - NetID: ss1072 | jdm127'
+date: "September 20, 2019"
+output: pdf_document
+papersize: a3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(knitr)
+library(formatR)
+library(ggplot2)
+library(ggfortify)
+library(quantreg)
+library(gridExtra)
+library(Hmisc)
+library(corrplot)
+library(GGally)
+library(caret)
+library(psych)
+library(car)
+library(huxtable)
+library(stargazer)
+library(DataExplorer)
+library(GGally)
+library(MASS)
+library(data.table)
+library(e1071)
+library(pROC)
+library(tidyverse)
+
+options(scipen=999)
+
+opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+```
+
+<br/>
+
+---
+
+
+## Exercise 1
+
+* Make exploratory plots to explore the relationships between Win and the following variables: Home, TeamPoints, FieldGoals., Assists, Steals, Blocks and Turnovers. Don’t include any of the plots, just briefly describe the relationships.
+
+\ 
+
+#### EDA
+
+\ 
+
+
+```{r echo = FALSE, comment=NA}
+#setwd("D:/Dropbox/Duke University/1st Semester/IDS 702 - Modelling and Representation of Data/labs/lab2")
+
+nba <- read.csv("nba_games_stats.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
+
+# Set factor variables
+nba$Home <- factor(nba$Home)
+nba$Team <- factor(nba$Team)
+nba$WINorLOSS <- factor(nba$WINorLOSS)
+
+# Convert date to the right format
+nba$Date <- as.Date(nba$Date, "%Y-%m-%d")
+
+# Also create a binary variable from WINorLOSS. 
+# This is not always necessary but can be useful for R functions that prefer numeric binary variables to the original factor variables
+nba$Win <- rep(0,nrow(nba))
+nba$Win[nba$WINorLOSS=="W"] <- 1
+
+# I picked the Charlotte Hornets (CHO) as an example, you should pick any team you want
+nba_reduced <- nba[nba$Team == "TOR", ]
+
+# Set aside the 2017/2018 season as your test data
+nba_reduced_train <- nba_reduced[nba_reduced$Date < "2017-10-01",]
+nba_reduced_test <- nba_reduced[nba_reduced$Date >= "2017-10-01",]
+```
+
+```{r echo = FALSE, comment=NA}
+nba_reducedq1 <- nba_reduced[,c('Home', 'TeamPoints', 'FieldGoals.', 'Assists', 'Steals', 'Blocks', 'Turnovers','Win')]
+
+summary(nba_reducedq1)
+```
+
+\ 
+
+The relationship between *Win* and *TeamPoints* depicts the obvious positive relation of winning with a higher number of points in a match. When the team wins they score more points compared to when they lose. The same positive relation exists when comparing *Win* to *FieldGoals* and *Assists*. However, when we compare *Win* to *Steals* and *Blocks* the differential is not that clear, this means that there is no clear relationship between the number of steals and blocks, and the team winning a match. Lastly, for the case of home and away games, it is clear that the team performs better at home, as it would've been expected. 
+
+\ 
+
+## Exercise 2
+
+* There are several combinations of variables we should not include as predictors in the logistic model. Identify at least two pairs and explain in at most two sentences, why we should not include them in the model at the same time.
+
+\ 
+
+```{r echo = TRUE, comment=NA}
+cor <- cor(nba_reduced[,-c(1,2,3,4,5,6,7)])
+
+cor[upper.tri(cor)] <- NA
+
+cor_df <- as.data.frame(as.table(cor))
+
+colnames(cor_df) <- c("Variable 1", "Variable 2", "Corr")
+
+high_risk_pairs <- subset(cor_df, (abs(Corr) >= 0.8) & (abs(Corr)<1))
+
+high_risk_pairs[order(-high_risk_pairs$Corr),]
+```
+
+We should not include the variables presented in the table since they have a big correlation and would bring problems of multicollinearity.
+
+\ 
+
+## Exercise 3
+
+* Fit a logistic regression model for Win (or WinorLoss) using Home, TeamPoints, FieldGoals., Assists, Steals, Blocks and Turnovers. as your predictors. Using the vif function, are there are any concerns regarding multicollinearity in this model?
+
+\ 
+
+```{r echo = TRUE, comment=NA}
+logit_nba <- glm(Win ~ Home + TeamPoints + FieldGoals. + Assists + Steals + Blocks + Turnovers, family = binomial(link = logit), data = nba_reduced_train)
+
+summary(logit_nba)
+
+vif(logit_nba)
+```
+\ 
+
+None of the variables has a VIF value greater than 10, which means we should not worry about multicollinearity in this model. In fact, all values are pretty close to 1, which implies that the predictor variables are not correlated or just moderately correlated. **However**, when we see the summary of the model, the coefficient for *FieldGoals.* is extremely high as well as its standard error. A likely cause for the incredibly large odd ratio and very large standard error is the multicollinearity among the independent variables of our model. As we saw in the previous item, *FieldGoals.* and *TeamPoints* have a very high correlation coefficient, leading us to think that this pair of variables is bringing problems due to multicollinearity. This is why we decide to drop the variable *FieldGoals.* and re-run the logit model.
+
+\ 
+
+## Exercise 4
+
+* Present the output of the fitted model and interpret the significant coefficients in terms of the odds of your team winning an NBA game.
+
+\ 
+
+```{r echo = TRUE, comment=NA}
+logit_nba2 <- glm(Win ~ Home + TeamPoints + Assists + Steals + Blocks + Turnovers, family = binomial(link = logit), data = nba_reduced_train)
+
+summary(logit_nba2)
+
+exp(coefficients(logit_nba2))
+```
+
+\ 
+
+The output of the logit model shows that the only significant coefficient is the one for *TeamPoints*.
+
+The coefficient for the variable *TeamPoints* is 0.06084. This means that for a one-unit increase in *TeamPoints*, we expect a 0.06084 increase in the log-odds of the dependent variable *Win*, holding all other independent variables constant. 
+
+To interpret better this coefficient, we can exponentiate it and analyze its value in terms of odds ratios. In this case, we can say for a one-unit increase in *TeamPoints*, we expect to see about a 6.27% increase in the odds of winning a game.
+
+\ 
+
+## Exercise 5
+
+* Using 0.5 as your cutoff for predicting wins or losses (1 vs 0) from the predicted probabilities, what is the accuracy of this model? Plot the roc curve for the fitted model. What is the AUC value?
+
+\ 
+
+```{r echo = TRUE, comment=NA}
+cutoff = 0.5
+
+Conf_mat <- confusionMatrix(as.factor(ifelse(fitted(logit_nba2) >= cutoff, "W","L")),
+                            nba_reduced_train$WINorLOSS,positive = "W")
+Conf_mat$table
+
+Conf_mat$overall["Accuracy"];
+
+Conf_mat$byClass[c("Sensitivity","Specificity")]
+
+invisible(roc(nba_reduced_train$WINorLOSS,fitted(logit_nba2),plot=T,print.thres="best",legacy.axes=T,
+              print.auc =T,col="red3"))
+```
+
+\ 
+
+The accuracy of the model is 0.707 and the AUC is 0.714.
+
+
+\ 
+
+## Exercise 6
+
+* Now add Opp.FieldGoals. as a predictor to the previous model. Is the coefficient significant? If yes, interpret the coefficient in the context of the question.
+
+\ 
+
+```{r echo = TRUE, comment=NA}
+logit_nba3 <- glm(Win ~ Home + TeamPoints + Opp.FieldGoals. + Assists + Steals + Blocks + Turnovers, family = binomial(link = logit), data = nba_reduced_train)
+
+summary(logit_nba3)
+
+exp(coefficients(logit_nba3))
+```
+
+
+\ 
+
+The coefficient for *Opp.FieldGoals.* is significant. We can interpret from the model's output that for a one-unit increase in *Opp.FieldGoals.*, we expect to see about 99.9999999999999993952091% decrease in the odds of winning a game.
+
+\ 
+
+## Exercise 7
+
+* What is the accuracy of this new model? Plot the ROC curve for the fitted model. What is the new AUC value? Which model predicts the odds of winning better?
+
+\ 
+
+```{r echo = TRUE, comment=NA}
+cutoff = 0.5
+
+Conf_mat <- confusionMatrix(as.factor(ifelse(fitted(logit_nba3) >= cutoff, "W","L")),
+                            nba_reduced_train$WINorLOSS,positive = "W")
+Conf_mat$table
+
+Conf_mat$overall["Accuracy"];
+
+Conf_mat$byClass[c("Sensitivity","Specificity")]
+
+invisible(roc(nba_reduced_train$WINorLOSS,fitted(logit_nba3),plot=T,print.thres="best",legacy.axes=T,
+              print.auc =T,col="red3"))
+```
+
+\ 
+
+The accuracy of the model increases dramatically to 0.83. Also, the AUC increased to 0.893. It is very clear that this new model is better when it comes to predicting the odds of winning a game.
+
+\ 
+
+## Exercise 8 
+
+* Using the results of the model with the better predictive ability, what suggestions do you have for the coach of your team trying to improve the odds of his team winning a regular season game?
+
+\ 
+
+Besides from the coefficient for *Opp.FieldGoals.*, our new model depicts the following insights:
+
+* 
+    + With a one-unit increase in *TeamPoints*, we expect to see about a 13.5% increase in the odds of winning a game.
+    + With a one-unit increase in *Assists*, we expect to see about an 11.8% increase in the odds of winning a game.
+    + With a one-unit increase in *Steals*, we expect to see about a 24.2% increase in the odds of winning a game.
+    
+This being said, our suggestion to the coach would be to emphasize a strategy in which the team focuses more on stealing the ball from the opponent and doing more assists. Additionally, there should be a focus as well on increasing the team's points and reducing the opponent's points (Although the effect of this is minimal, as seen on the previous items)
+
+\ 
+
+## Exercise 9 
+
+* Use this model to predict out-of-sample probabilities for the nba_reduced_test data. Using 0.5 as your cutoff for predicting wins or losses (1 vs 0) from the out-of-sample predicted probabilities, what is the out-of-sample accuracy? How well does your model do in predicting data for the 2017/2018 season?
+
+\ 
+
+```{r echo = TRUE, comment=NA}
+cutoff = 0.5
+
+Conf_mat <- confusionMatrix(as.factor(ifelse(predict(logit_nba3, nba_reduced_test, type="response") >= cutoff, "W","L")), nba_reduced_test$WINorLOSS,positive = "W")
+
+Conf_mat$table
+
+Conf_mat$overall["Accuracy"];
+
+Conf_mat$byClass[c("Sensitivity","Specificity")]
+
+invisible(roc(nba_reduced_test$WINorLOSS,predict(logit_nba3, nba_reduced_test, type="response"),plot=T,print.thres="best",legacy.axes=T,
+              print.auc =T,col="red3"))
+```
+
+\ 
+
+The out-of-sample accuracy is 82.92 and the out-of-sample AUC is 0.895. Our model does very well in predicting data for the 2017/2018 season since the in-sample values for accuracy and AUC are maintained even for the new data coming in the test set.
+
+
+\ 
+
+## Exercise 10 
+
+* Using the change in deviance test, test whether including Opp.Assists and Opp.Blocks in the model at the same time would improve the model. Is there any other variable in this dataset which we did not consider that you think might improve our model? Which one and why?
+
+\ 
+
+```{r echo = TRUE, comment=NA}
+logit_nba4 <- glm(Win ~ Home + TeamPoints + Opp.FieldGoals. + Assists + Steals + Blocks + Turnovers + Opp.Assists + Opp.Blocks, family = binomial(link = logit), data = nba_reduced_train)
+
+summary(logit_nba4)
+
+anova(logit_nba3, logit_nba4, test= "Chisq")
+```
+
+\ 
+
+At the 0.05 level, we can conclude that including the variables *Opp.Assists* and *Opp.Blocks* contributes to enhancing our logit model.
+
+Also, to improve our model we would add more information regarding the performance of the rival team in each match. The variables *Opp.TotalFouls*, *Opp.Turnovers*, *Opp.Steals* and *Opp.FreeThrows.* offer a good overall view of the rival team and would definitely add more predictive power to the model:
+
+\ 
+
+```{r echo = TRUE, comment=NA, warning=FALSE, message=NA}
+logit_nba5 <- glm(Win ~ Home + TeamPoints + Opp.FieldGoals. + Assists + Steals + Blocks + Turnovers + Opp.Assists + Opp.Blocks + Opp.TotalFouls	+ Opp.Turnovers	+ Opp.Steals + Opp.FreeThrows., family = binomial(link = logit), data = nba_reduced_train)
+
+summary(logit_nba5)
+
+anova(logit_nba4, logit_nba5, test= "Chisq")
+```
+
+\ 
+
+After running the Analysis of Deviance test we can conclude that the new features included in our model are significant.
+
+\ 
+
+```{r echo = TRUE, comment=NA}
+cutoff = 0.5
+
+Conf_mat <- confusionMatrix(as.factor(ifelse(predict(logit_nba5, nba_reduced_test, type="response") >= cutoff, "W","L")), nba_reduced_test$WINorLOSS,positive = "W")
+
+Conf_mat$table
+
+Conf_mat$overall["Accuracy"];
+
+Conf_mat$byClass[c("Sensitivity","Specificity")]
+
+invisible(roc(nba_reduced_test$WINorLOSS,predict(logit_nba5, nba_reduced_test, type="response"),plot=T,print.thres="best",legacy.axes=T,
+              print.auc =T,col="red3"))
+```
+
+In terms of predictive power, our new model behaves just as well as our past model, only outperforming it by a marginal value in the AUC. **Nonetheless**, our new model is better when it comes to balance between sensitivity and specificity. 

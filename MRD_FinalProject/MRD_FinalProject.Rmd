@@ -1,0 +1,526 @@
+---
+title: "Final Project"
+author: "Sebastián Soriano Pérez [ss1072]"
+date: "12/10/2019"
+output: pdf_document
+header-includes:
+- \usepackage{caption}
+- \usepackage[document]{ragged2e}
+- \usepackage{booktabs}
+- \usepackage{indentfirst}
+- \usepackage{float}
+- \floatplacement{figure}{H}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(arm); library(pROC); library(e1071); library(caret); library(knitr)
+library(rms); library(ggplot2); library(lme4); library(rstan); library(brms)
+library(sjPlot); library(dplyr); library(kableExtra); library(formatR); library(ggfortify)
+library(quantreg); library(gridExtra); library(Hmisc); library(corrplot); library(GGally)
+library(psych); library(car); library(huxtable); library(stargazer); library(DataExplorer)
+library(GGally); library(MASS); library(data.table); library(tidyverse); library(lmerTest)
+library(ggpubr); library(reshape2); library(mice); library(naniar); library(cobalt)
+library(MatchIt); library(randomForest); library(MuMIn)
+rb <- c('red', 'orange', 'yellow', 'green', 'blue', 'purple')
+vif.mer <- function(fit){
+    ## adapted from rms::vif
+    v <- vcov(fit)
+    nam <- names(fixef(fit))
+
+    ## exclude intercepts
+    ns <- sum(1 * (nam == "Intercept" | nam == "(Intercept)"))
+    if(ns > 0){
+        v <- v[-(1:ns), -(1:ns), drop = FALSE]
+        nam <- nam[-(1:ns)]
+    }
+
+    d <- diag(v)^0.5
+    v <- diag(solve(v / (d %o% d)))
+    names(v) <- nam
+    v
+}
+```
+
+# Analyzing Video Game Sales
+
+```{r data, include = FALSE}
+vgsales <- read.csv('vgsales.csv')
+vgsales$Year_of_Release <- year(as.Date(as.character(vgsales$Year_of_Release), format = '%Y'))
+colnames(vgsales) <- c('name', 'platform', 'year_of_release', 'genre', 'publisher', 'na_sales',
+                       'eu_sales', 'jp_sales', 'other_sales', 'global_sales', 'critic_score',
+                       'critic_count', 'user_score', 'user_count', 'developer', 'rating')
+vgsales[vgsales$user_score == '',]$user_score <- 'tbd'
+vgsales[vgsales$user_score == 'tbd',]$user_score <- NA
+vgsales <- vgsales[!is.na(vgsales$critic_score),]
+vgsales <- vgsales[!is.na(vgsales$user_score),]
+vgsales$user_score <- as.numeric(vgsales$user_score)
+vgsales$log_global_sales <- log(vgsales$global_sales)
+vgsales$platform_company <- 'Sony'
+vgsales[
+  vgsales$platform == '3DS'
+  | vgsales$platform == 'DS'
+  | vgsales$platform == 'GB' 
+  | vgsales$platform == 'GBA'
+  | vgsales$platform == 'GC'
+  | vgsales$platform == 'N64'
+  | vgsales$platform == 'Wii'
+  | vgsales$platform == 'WiiU',
+  ]$platform_company <- 'Nintendo'
+vgsales[vgsales$platform == 'DC',]$platform_company <- 'Sega'
+vgsales[vgsales$platform == 'PC',]$platform_company <- 'PC'
+#vgsales[vgsales$platform == 'WS',]$platform_company <- 'Bandai'
+vgsales[
+  vgsales$platform == 'X360'
+  | vgsales$platform == 'XB'
+  | vgsales$platform == 'XOne',
+  ]$platform_company <- 'Microsoft'
+vgsales$platform_company <- as.factor(vgsales$platform_company)
+vgsales$rating_everyone <- 0
+vgsales[vgsales$rating == 'E',]$rating_everyone <- 1
+vgsales$rating_everyone <- as.factor(vgsales$rating_everyone)
+```
+
+## Summary
+This report will try to find what factors can help determine whether a video game release will be successful in terms of the number of units it sells worldwide, and which of these factors have the strongest impact on sales. This analysis uses a public dataset that gathers data for video games that have sold more than 100,000 copies worldwide from 1976 to 2016, and includes the video game's development and release information, as well as information on the public reception of the video game. 
+
+By creating a hierarchical multiple linear regression model with random intercept effects, it was found that the most significant predictors are the platform manufacturer, the genre of the videogame, the number of users and critics that review the video game on Metacritic, as well as the aggregated critic score it receives.
+
+## Introduction
+The video game industry has been growing consistently during the last two decades, and in 2017 it was worth more than 122 billion USD worldwide according to [an article on Bloomberg](https://www.bloomberg.com/news/articles/2019-01-23/peak-video-game-top-analyst-sees-industry-slumping-in-2019). There are several factors that influence whether a video game will be successful or not, such as the developer studio, the critics rating, the user rating, among others. I will build a model to analyze what factors can help us determine how successful will a video game be in terms of global sales.
+
+The goal of this project is to find what are the most significant predictors for a video games success, measured as the number of sales around the world. I analyzed a total of 4195 video game software releases across the world by 50 different developers. I built a hierarchical linear model on a logarithmic transformation of the global sales, with random slopes by developer, using a manual stepwise selection process using AIC and conditional R-squared as selection criteria.
+
+Considering that the developing studio plays a major role on a customer’s decision to buy a new game, and due to the fact that accounting for every single studio included in the dataset (444 total) would make the interpretation too complicated, I used a random sample of 50 developers and built an appropriate hierarchical model with random intercepts effects for each one of them. The variables in the final model were found to be significant in predicting the global sales for a video game.
+
+## Data
+The data was obtained from Kaggle (https://www.kaggle.com/rush4ratio/video-game-sales-with-ratings). It contains data from video games with 100,000 or more global sales from 1976 to 2016. The data contains 16719 rows with the following columns:
+
+  - *name* (categorical): Name of the video game
+  - *platform* (categorical): PLatform or console for which the video game was released
+  - *year_of_release* (categorical): Year of first release
+  - *genre* (categorical): Genre of the video game
+  - *publisher* (categorical): Publishing company
+  - *na_sales* (numerical): Units sold in North America
+  - *eu_sales* (numerical): Units sold in Europe
+  - *jp_sales* (numerical): Units sold in Japan
+  - *other_sales* (numerical): Units sold in the rest of the world
+  - *global_sales* (numerical): Total units sold worldwide
+  - *critic_score* (numerical): Average score (from 0 to 100) according to critics from other media aggregated by Metacritic
+  - *critic_count* (numerical): Number of critics taken into account for the Metacritic critic score
+  - *user_score* (numerical): Average score (from 0 to 100) according to Metacritic users
+  - *user_count* (numerical): Number of user scores on Metacritic
+  - *developer* (categorical): Video game developing company
+  - *rating* (categorical): Video game rating according to the ESRB that indicates the appropriate audience
+  
+Around half of the rows in the dataset have missing values. First of all, I filtered out every video game release before 2000 since it seemed that for older releases there was more missing data and this report is only concerned with more recent releases. After observing the rest of the rows, the missing data seemed to be at random, so I decided to use only the 6951 rows with complete data. 
+
+To consider the variable *publisher* into the model (since it has 444 different levels), I took a random sample of 50 different publishing companies from the dataset and built a sample dataset to work with. I observed the distribution of the response variable *global_sales* and noticed that its distribution is not normal. After applying a logarithmic transformation the distribution becomes normal, so I added the following column to the dataset:
+
+  - *log_global_sales*: Logarithmic transformation of *global_sales*
+  
+```{r sample, out.width = '33%', out.height = '33%', echo = FALSE}
+#Selecting 50 sample publishers
+publishers <- unique(vgsales$publisher)
+set.seed(2163386)
+sample_publishers<- sample(publishers, 50)
+sample_data <- vgsales[vgsales$publisher %in% sample_publishers,]
+sample_data$critic_score_c <- sample_data$critic_score - mean(sample_data$critic_score)
+sample_data$critic_count_c <- sample_data$critic_count - mean(sample_data$critic_count)
+sample_data$user_score_c <- sample_data$user_score - mean(sample_data$user_score)
+sample_data$user_count_c <- sample_data$user_count - mean(sample_data$user_count)
+
+par(mfrow = c(1, 2)) 
+
+ggplot(data = sample_data, aes(x = global_sales)) + 
+  geom_histogram(color = 'black', fill = rainbow(20), bins = 20) + 
+  theme_minimal()
+
+ggplot(data = sample_data, aes(x = log_global_sales)) + 
+  geom_histogram(color = 'black', fill = rainbow(20), bins = 20) + 
+  theme_minimal()
+```
+
+Since the categorical variables have many levels and in order to center the numerical variables to avoid multicollinearity issues, I created the following additional columns:
+
+  - *critic_score_c* (numerical): Values of *critic_score* minus the column's mean value
+  - *critic_count_c* (numerical): Values of *critic_count* minus the column's mean value
+  - *user_score_c* (numerical): Values of *user_score* minus the column's mean value
+  - *user_count_c* (numerical): Values of *user_count* minus the column's mean value
+  - *platform_company* (categorical): Company that manufactures the video game's platform
+    + 'Nintendo' when *platform* is '3DS', 'DS', 'GB', 'GBA', 'GC', 'N64', 'Wii', or 'WiiU' 
+    + 'Sega' when  *platform* is 'DC' 
+    + 'PC' when *platform* is 'PC' 
+    + 'Microsoft' when *platform* is 'X360', 'XB', or 'XOne' 
+    + 'Sony' when *platform* is 'PS', 'PS2', 'PS3', 'PS4', 'PSP', or 'PSV'
+  - *rating_everyone* (binary): Indicates if there is not an age restriction for the video game release
+    + '1' when *rating* is 'E'
+    + '0' when *rating* is not 'E'
+
+A summary of the data variables being analyzed can be found in Appendix 1.1.
+
+For the Exploratory Data Analysis, I plotted every relevant variable versus the response variable *log_global_sales*. All of the categorical variables seemed to have different means for the response variable on at least two levels, and the numerical variables seemed to have a positive effect on the response variable. I observed at some interactions between categorical variables (*platform_company*:*rating_everyone*, *platform_company*:*genre*, and *genre*:*rating_everyone*) and since the distributions seemed to vary I took them into account during the model selection. (For a full EDA, see Appendix 1.2).
+
+```{r plots, out.width = '33%', out.height = '33%', echo = FALSE}
+#Categorical
+publishers_sample <- unique(sample_data$publisher)
+set.seed(4057)
+plot_publishers<- sample(publishers_sample, 5)
+plot_data <- sample_data[sample_data$publisher %in% plot_publishers,]
+plot_data$publisher = factor(plot_data$publisher)
+
+ggplot(data = plot_data, mapping = aes(x = publisher, y = log_global_sales, fill = publisher)) + 
+  geom_boxplot() + theme_minimal() + theme(axis.text.x = element_blank())
+
+#Numerical
+ggplot(data = sample_data, aes(x = critic_score, y = log_global_sales)) + geom_point(color = 'gold') + 
+  geom_smooth(method = lm, color = 'darkgray') + theme_minimal()
+
+#Interactions
+sample_data %>% 
+  ggplot(mapping = aes(x = platform_company, y = log_global_sales, fill = rating_everyone)) + 
+  geom_boxplot() + theme_minimal()
+```
+
+
+## Model
+In order to obtain a final model for the response variable *log_global_sales* various methods for model selection were tested and interactions between predictors were considered as part of the full model. Since the publishing companies in the sample dataset are a sample of the total publishers available, I included random intercept effects for *publisher* in the final model. The categorical and numerical variables (except for *na_sales*, *eu_sales*, *jp_sales*, and *other_sales*, since their sum is exactly equal to *global_sales*) were taken into account for the model selection as predictors. The interaction terms *platform_company*:*genre*, *platform_company*:*rating_everyone*, and *genre*:*rating_everyone* were considered too.
+
+```{r model_building, include = FALSE, echo = FALSE}
+# print('null_model')
+# null_model <- lmer(formula = log_global_sales
+#                 ~ (1 | publisher),
+#                 data = sample_data)
+# r.squaredGLMM(null_model)
+# summary(null_model)
+# 
+# print('model1')
+# model1 <- lmer(formula = log_global_sales
+#                ~ platform_company
+#                + (1 | publisher),
+#                data = sample_data)
+# r.squaredGLMM(model1)
+# summary(model1)
+# 
+# anova(null_model, model1)
+# 
+# print('model2')
+# model2 <- lmer(formula = log_global_sales
+#                ~ platform_company + genre
+#                + (1 | publisher),
+#                data = sample_data)
+# r.squaredGLMM(model2)
+# summary(model2)
+# 
+# anova(model1, model2)
+# 
+# print('model3')
+# model3 <- lmer(formula = log_global_sales
+#                ~ platform_company + genre + rating_everyone
+#                + (1 | publisher),
+#                data = sample_data)
+# r.squaredGLMM(model3)
+# summary(model3)
+# 
+# anova(model2, model3)
+# 
+# print('model4')
+# model4 <- lmer(formula = log_global_sales
+#                ~ platform_company + genre + rating_everyone
+#                + critic_score_c
+#                + (1 | publisher),
+#                data = sample_data)
+# r.squaredGLMM(model4)
+# summary(model4)
+# 
+# anova(model3, model4)
+# 
+# print('model5')
+# model5 <- lmer(formula = log_global_sales
+#                ~ platform_company + genre + rating_everyone
+#                + critic_score_c + critic_count_c
+#                + (1 | publisher),
+#                data = sample_data)
+# r.squaredGLMM(model5)
+# summary(model5)
+# 
+# anova(model4, model5)
+# 
+# print('model6')
+# model6 <- lmer(formula = log_global_sales
+#                ~ platform_company + genre + rating_everyone
+#                + critic_score_c + critic_count_c + user_score_c
+#                + (1 | publisher),
+#                data = sample_data)
+# r.squaredGLMM(model6)
+# summary(model6)
+# 
+# anova(model5, model6)
+# 
+# print('model7')
+# model7 <- lmer(formula = log_global_sales
+#                ~ platform_company + genre + rating_everyone
+#                + critic_score_c + critic_count_c + user_score_c + user_count_c
+#                + (1 | publisher),
+#                data = sample_data)
+# r.squaredGLMM(model7)
+# summary(model7)
+# 
+# anova(model6, model7)
+# 
+# print('model8')
+# model8 <- lmer(formula = log_global_sales
+#                ~ platform_company + genre + rating_everyone
+#                + critic_score_c + critic_count_c + user_count_c
+#                + platform_company:rating_everyone
+#                + (1 | publisher),
+#                data = sample_data)
+# r.squaredGLMM(model8)
+# summary(model8)
+# 
+# anova(model7, model8)
+# 
+# print('model9')
+# model9 <- lmer(formula = log_global_sales
+#                ~ platform_company + genre + rating_everyone
+#                + critic_score_c + critic_count_c + user_count_c
+#                + platform_company:rating_everyone + platform_company:genre
+#                + (1 | publisher),
+#                data = sample_data)
+# r.squaredGLMM(model9)
+# summary(model9)
+# 
+# anova(model8, model9)
+# 
+# print('model10')
+# model10 <- lmer(formula = log_global_sales
+#                 ~ platform_company + genre + rating_everyone
+#                 + critic_score_c + critic_count_c + user_count_c
+#                 + platform_company:rating_everyone + platform_company:genre + genre:rating_everyone
+#                 + (1 | publisher),
+#                 data = sample_data)
+# r.squaredGLMM(model10)
+# summary(model10)
+# 
+# anova(model9, model10)
+# 
+# print('full_model')
+full_model <- lmer(formula = log_global_sales
+                ~ platform_company + genre + rating_everyone
+                + critic_score_c + critic_count_c + user_count_c
+                + platform_company:rating_everyone + genre:rating_everyone
+                + (1 | publisher),
+                data = sample_data)
+r.squaredGLMM(full_model)
+summary(full_model)
+
+# anova(model10, full_model)
+
+confints <- confint(full_model)
+confints <- confints[3:37,]
+```
+
+The final model was selected with a manual stepwise approach in R, using AIC and the conditional R_GLMM-squared (conditional R-squared) from the MuMIn package, which is described as "a variance explained by the entire model, including both fixed and random effects" in the r.squaredGLMM function documentation. The final model's conditional R-squared is 0.4928372, meaning almost half of the data's variance is explained by the model. 
+
+The variables *platform*, *genre*, *critic_score_c*, *critic_count_c*, *user_count_c*, as well as the interactions *platform*:*rating_everyone* and *genre*:*rating_everyone* were found to be significant. The variable *rating_everyone* was added to the model because its interactions had significant levels and improved the model considerably. With an AIC value of 12114, the final model has the following formula:
+
+\[
+\mathit{log\_global\_sales}_{i,j} = \beta_{\mathrm{(Intercept)}} + \gamma_{\mathrm{(Intercept)},j} + \sum_{p \in P} \beta_p \left( \mathit{platform\_company}_p \right)_{i,j} + \sum_{g \in G} \beta_g \left( \mathit{genre}_g \right)_{i,j}
+\]
+\[
++ \beta_{\mathrm{rating\_everyone}} \mathit{rating\_everyone}_{i,j} + \beta_{\mathrm{critic\_score\_c}} \mathit{critic\_score\_c}_{i,j} + \beta_{\mathrm{critic\_count\_c}} \mathit{critic\_count\_c}_{i,j}
+\]
+\[
++ \beta_{\mathrm{user\_count\_c}} \mathit{user\_count\_c}_{i,j} + \sum_{p \in P} \beta_{p, \mathrm{rating\_everyone}} \left( \mathit{platform\_company}_p \right)_{i,j} \mathit{rating\_everyone}_{i,j}
+\]
+\[
++ \sum_{g \in G} \beta_{g, \mathrm{rating\_everyone}} \left( \mathit{genre}_g \right)_{i,j} \mathit{rating\_everyone}_{i,j} + \epsilon_{i,j};
+\]
+
+Where: 
+
+$j \in J$; ($J$ is the set of 50 publishers, for the full set see Appendix 1.3.)
+
+$P = \{$Nintendo, PC, Sega, Sony$\}$
+
+$G = \{$Adventure, Fighting, Misc, Platform, Puzzle, Racing, Role-Playing, Shooter, Simulation, Sports, Strategy$\}$
+
+$\epsilon_{i,j} \sim N \left( 0,\sigma^2 \right) \quad \mathrm{and} \quad \gamma_{\mathrm{(Intercept)},j} \sim N \left( 0,\tau_{(\mathrm{Intercept})}^2 \right)$
+
+The final model's fixed coefficients have the following values for every $\beta$ coefficient:\
+
+```{r model, echo = FALSE}
+full_model_coefficients <- summary(full_model)$coefficients
+full_model_coefficients <- data.frame(full_model_coefficients)
+full_model_coefficients$Std..Error <- NULL
+full_model_coefficients$df <- NULL
+full_model_coefficients <- cbind(full_model_coefficients, confints)
+full_model_coefficients$Sales <- exp(full_model_coefficients$Estimate)
+kable(round(full_model_coefficients, 2), caption = "Model's Fixed Coefficients", row.names = TRUE,
+      label = "tables", format = "latex", booktabs = TRUE) %>% kable_styling(
+        latex_options = "HOLD_position"
+        )
+```
+
+\mathchardef\mhyphen="2D
+
+The baseline intercept indicates that a game of no particular publisher, released on a Microsoft Console, of the Action genre, with an age-restriction rating, with critic score of 71.58, reviewed by 30.77 critics and 181.4 users would sell 0.20 million (M) copies worldwide. The most significant variables is *critic_count_c*. A one-unit increase (31.77 critic reviews in total) would indicate a video game could be expected to sell 2% more units. 
+
+The other significant variables are $\mathit{platform\_company}_{\mathrm{PC}}$ (76% less sales), *critic_score_c* (2% more sales for a one unit increase), *user_count_c* (0.05% more sales for a one unit increase), $\mathit{platform\_company}_{\mathrm{Sony}}$ (58% more sales), $\mathit{genre}_{\mathrm{Misc}}$ (71% more sales), $\mathit{genre}_{\mathrm{Simulation}}$ (53% more sales), $\mathit{genre}_{\mathrm{Strategy}}$ (39% less sales), $\mathit{genre}_{\mathrm{Shooter}}$:*rating_everyone* (additional 81% less sales), $\mathit{genre}_{\mathrm{Fighting}}$ (36% more sales), $\mathit{genre}_{\mathrm{Adventure}}$ (29% less sales), $\mathit{genre}_{\mathrm{Role \mhyphen Playing}}$:*rating_everyone* (additional 60% more sales), $\mathit{platform\_company}_{\mathrm{Nintendo}}$:*rating_everyone* (additional 26% more sales), and $\mathit{genre}_{\mathrm{Role \mhyphen Playing}}$ (17% less sales) in order of significance.
+
+The random intercept effects by plublisher or $\gamma_{\mathrm{(Intercept)}}$ random effects are shown in the following plot (See Appendix 1.3. for a table with the point estimates):\
+
+```{r gammas_plot, out.width = '50%', out.height = '80%', fig.align = 'center', echo = FALSE}
+ranefs <- ranef(full_model, condVar = TRUE)
+plot_ranefs <- dotplot(ranefs, main = FALSE, scales = list(y = list(cex = 0.5)))
+plot_ranefs$publisher
+```
+
+As for the random intercept effects, it can be observed that only 10 out of the 50 publishers have significant (with 95% confidence) values: LucasArts (a baseline game would sell 0.55M copies), Nintendo (0.55M too), Electronic Arts (0.39M), Activision (0.37M), Microsoft Game Studios (0.29M), Ubisoft (0.29M), Sega (0.26M), Atari (0.24M), Microids (0.11M), and Yacht Club Games (0.09M) (the latter two have negative random intercept effects). It is noteworthy that the first 8 publishers release the largest number of videogames and are among the best known video game companies in the world.
+
+All of the VIF values of the model predictors are below 5 with the exception of *rating_everyone* (See Appendix 1.4. for each individual VIF value). I decided to keep the variable in the model because the interactions between *rating_everyone* and the categorical variables improve the model significantly. For the most part, the model does not show any serious multicollinearity issues. The model assumptions of linearity, independence, and equal variance seem to be met. The normality as- sumptions may be a reason to worry about since the Q-Q shows tails on both sides. (See Appendix 1.5.)
+
+
+## Conclusions
+The final model indicates that the main factors that can help us determine how many units a video game will sell globally are the platform manufacturer, the genre of the videogame, the number of users and critics that review the video game on Metacritic, as well as the aggregated critic score it receives. The platforms in which video games sell the most units are made by Sony, belong to the Misc genre, and are rated E for everyone. The better the critic score a video game receives, and the more users and critics reviews it gets, the more units it will sell worldwide.
+
+To improve the model I would start with the collection of data. Building a better web scrapping script I could get complete data for more video games, including recent years. A restriction on the publishing companies to only those that have sold more than a certain amount of units worldwide could also improve the analysis. To avoid the multicollinearity issue with *rating_everyone* I would use the variable *rating* instead, although the model interpretation and the interaction effects would become way more complicated, and the model would be less practical or useful.
+
+Although the conditional R-squared value is just a little bit below 0.5, I believe this hierarchical model does represent the reality well enough. The variables that were found to be significant confirm the information observed during the exploratory data analysis, and correspond to my knowledge and understanding of the video game industry. The most well-known publishing companies, best selling platform manufacturers, and most popular genres correspond to the interpretation of the model.
+
+\pagebreak
+
+# Appendix 
+
+1.1 Dataset Summary
+\
+```{r data_summary, echo= FALSE}
+#print('vgsales')
+#summary(vgsales)
+
+print('sample_data')
+summary(sample_data)
+```
+\
+1.2. Exploratory Data Analysis
+\
+```{r eda_appendix, out.width = '33%', out.height = '33%', echo = FALSE}
+#Categorical
+publishers_sample <- unique(sample_data$publisher)
+set.seed(4057)
+plot_publishers<- sample(publishers_sample, 5)
+plot_data <- sample_data[sample_data$publisher %in% plot_publishers,]
+plot_data$publisher = factor(plot_data$publisher)
+
+ggplot(data = plot_data, mapping = aes(x = publisher, y = log_global_sales, fill = publisher)) + 
+  geom_boxplot() + theme_minimal() + theme(axis.text.x = element_blank())
+
+sample_data %>% 
+  ggplot(mapping = aes(x = platform_company, y = log_global_sales, fill = platform_company)) + 
+  geom_boxplot() + theme_minimal() + theme(axis.text.x = element_blank())
+
+sample_data %>% subset(genre %in% sample(unique(sample_data$genre), 10)) %>% 
+  ggplot(mapping = aes(x = genre, y = log_global_sales, fill = genre)) + 
+  geom_boxplot() + theme_minimal() + theme(axis.text.x = element_blank())
+
+sample_data %>% subset(developer %in% sample(unique(sample_data$developer), 10)) %>% 
+  ggplot(mapping = aes(x = developer, y = log_global_sales, fill = developer)) + 
+  geom_boxplot() + theme_minimal() + theme(axis.text.x = element_blank())
+
+sample_data %>% 
+  ggplot(mapping = aes(x = rating_everyone, y = log_global_sales, fill = rating_everyone)) + 
+  geom_boxplot() + theme_minimal() + theme(axis.text.x = element_blank())
+
+#Numerical
+ggplot(data = sample_data, aes(x = critic_score, y = log_global_sales)) + geom_point(color = 'gold') + 
+  geom_smooth(method = lm, color = 'darkgray') + theme_minimal()
+
+ggplot(data = sample_data, aes(x = critic_count, y = log_global_sales)) + geom_point(color = 'darkblue') + 
+  geom_smooth(method = lm, color = 'darkgray') + theme_minimal()
+
+ggplot(data = sample_data, aes(x = user_score, y = log_global_sales)) + geom_point(color = 'darkred') + 
+  geom_smooth(method = lm, color = 'darkgray') + theme_minimal()
+
+ggplot(data = sample_data, aes(x = user_count, y = log_global_sales)) + geom_point(color = 'darkgreen') + 
+  geom_smooth(method = lm, color = 'darkgray') + theme_minimal()
+
+#Interactions
+sample_data %>% 
+  ggplot(mapping = aes(x = platform_company, y = log_global_sales, fill = rating_everyone)) + 
+  geom_boxplot() + theme_minimal()
+
+sample_data %>% subset(genre %in% sample(unique(sample_data$genre), 10)) %>% 
+  ggplot(mapping = aes(x = genre, y = log_global_sales, fill = rating_everyone)) + 
+  geom_boxplot() + theme_minimal()
+
+sample_data %>% subset(platform_company == 'Nintendo') %>% ggplot(mapping = aes(x = genre, y = log_global_sales, fill = genre)) + 
+  geom_boxplot() + theme_minimal() + theme(axis.text.x = element_blank()) + ggtitle('Nintendo')
+
+sample_data %>% subset(platform_company == 'Microsoft') %>% ggplot(mapping = aes(x = genre, y = log_global_sales, fill = genre)) + 
+  geom_boxplot() + theme_minimal() + theme(axis.text.x = element_blank()) + ggtitle('Microsoft')
+
+sample_data %>% subset(platform_company == 'Sony') %>% ggplot(mapping = aes(x = genre, y = log_global_sales, fill = genre)) + 
+  geom_boxplot() + theme_minimal() + theme(axis.text.x = element_blank()) + ggtitle('Sony')
+
+sample_data %>% subset(platform_company == 'PC') %>% ggplot(mapping = aes(x = genre, y = log_global_sales, fill = genre)) + 
+  geom_boxplot() + theme_minimal() + theme(axis.text.x = element_blank()) + ggtitle('PC')
+```
+\
+1.3. Random Effects for the Intercept by Publisher
+\
+```{r gammas_table, echo = FALSE}
+gammas <- as.data.frame(ranefs$publisher) # rownames(gammas) <- NULL
+gammas$totalcoef <- gammas[,1] + full_model_coefficients[1, 1]
+gammas$oddsratios <- exp(gammas$totalcoef)
+colnames(gammas) <- c("gamma", "log_global_sales Scale", "global_sales Scale")
+kable(round(gammas[1:45,], 2), caption = "Random Effects for the Intercept by Publisher", row.names = TRUE,
+      label = "tables", format = "latex", booktabs = TRUE) %>% kable_styling(
+        latex_options = "HOLD_position"
+        )
+```
+```{r gammas_table2, echo = FALSE}
+gammas <- as.data.frame(ranefs$publisher) # rownames(gammas) <- NULL
+gammas$totalcoef <- gammas[,1] + full_model_coefficients[1, 1]
+gammas$oddsratios <- exp(gammas$totalcoef)
+colnames(gammas) <- c("gamma", "log_global_sales", "global_sales")
+kable(round(gammas[46:50,], 2), caption = "Random Effects for the Intercept by Publisher (continued)", row.names = TRUE,
+      label = "tables", format = "latex", booktabs = TRUE) %>% kable_styling(
+        latex_options = "HOLD_position"
+        )
+```
+\
+1.4. Model's VIFs for the Fixed Effects
+\
+```{r vif, echo= FALSE}
+vifs <- vif.mer(full_model)
+kable(round(vifs, 2), caption = "Model's VIFs for the Fixed Effects", row.names = TRUE,
+      label = "tables", format = "latex", booktabs = TRUE) %>% kable_styling(
+        latex_options = "HOLD_position"
+        )
+```
+\
+1.5. Model Assumptions and Validation
+\
+```{r assumptions, out.width = '33%', out.height = '33%', echo = FALSE}
+plot(y = resid(full_model), x = sample_data$critic_score_c, xlab = "critic_score_c", ylab = "Residual")
+abline(0,0)
+
+plot(y = resid(full_model), x = sample_data$critic_count_c, xlab = "critic_count_c", ylab = "Residual")
+abline(0,0)
+
+plot(y = resid(full_model), x = sample_data$user_count_c, xlab = "user_count_c", ylab = "Residual")
+abline(0,0)
+
+plot(y = resid(full_model), x = sample_data$platform_company, xlab = "platform_company", ylab = "Residual")
+abline(0,0)
+
+plot(y = resid(full_model), x = sample_data$genre, xlab = "genre", ylab = "Residual")
+abline(0,0)
+
+plot(y = resid(full_model), x = sample_data$rating_everyone, xlab = "rating_everyone", ylab = "Residual")
+abline(0,0)
+
+plot(full_model, which = 1)
+qqnorm(resid(full_model))
+qqline(resid(full_model))
+```
